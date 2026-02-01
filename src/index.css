@@ -1,0 +1,117 @@
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+
+
+:root {
+  /* Backgrounds */
+  --background: #ffffff;           /* Primary page background */
+  --surface: #fafafa;              /* Elevated sections (e.g., panels, sections) */
+  --surface-elevated: #ffffff;     /* Cards, popovers, modals */
+
+  /* Text Colors */
+  --foreground: #0a0a0a;           /* Primary text, headings */
+  --foreground-secondary: #525252; /* Secondary text, body paragraphs */
+  --foreground-muted: #a3a3a3;     /* Metadata, captions, helper text */
+
+  /* Accent & Semantic Colors */
+  --accent: #3b82f6;               /* Links, primary buttons, focus states */
+  --accent-hover: #60a5fa;          /* Hover state for links/buttons */
+  --accent-foreground: #ffffff;     /* Text/icon color on accent backgrounds */
+
+  --success: #16a34a;               /* Success states (e.g., notifications, badges) */
+  --warning: #ea580c;               /* Warning states (e.g., alerts) */
+  --error: #dc2626;                 /* Error states (e.g., form errors, alerts) */
+
+  /* Borders */
+  --border: #e5e5e5;                /* Default borders (e.g., inputs, dividers) */
+  --border-strong: #d4d4d4;         /* Emphasized borders (e.g., active states, cards) */
+
+  /* Code Blocks */
+  --code-bg: #f5f5f5;               /* Background for code snippets */
+  --code-foreground: #171717;       /* Text color inside code blocks */
+
+  /* UI Components */
+  --card: #ffffff;                   /* Card backgrounds */
+  --card-foreground: #0a0a0a;       /* Text color inside cards */
+
+  --input: #ffffff;                  /* Input fields background */
+  --input-border: #e5e5e5;           /* Default input borders */
+  --input-focus: #2563eb;            /* Input focus outline / border */
+
+  --tag-bg: #f5f5f5;                 /* Tag/pill background */
+  --tag-foreground: #525252;         /* Tag/pill text */
+  --tag-border: #e5e5e5;             /* Tag/pill border */
+
+  /* Border Radius */
+  --radius: 0.5rem;                  /* Default rounded corners */
+  --radius-sm: 0.375rem;             /* Small radius (inputs, buttons) */
+  --radius-lg: 0.75rem;              /* Large radius (cards, modals) */
+
+  /* Spacing scale (4px base) */
+  --space-0: 0;
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3rem;    /* 48px */
+  --space-16: 4rem;    /* 64px */
+}
+
+.dark {
+  /* Backgrounds */
+  --background: #0a0a0a;          /* Primary page background */
+  --surface: #171717;             /* Elevated sections (panels, sections) */
+  --surface-elevated: #262626;    /* Cards, popovers, modals */
+
+  /* Text Colors */
+  --foreground: #fafafa;           /* Primary text, headings */
+  --foreground-secondary: #a3a3a3; /* Secondary text, body paragraphs */
+  --foreground-muted: #525252;     /* Metadata, captions, helper text */
+
+  /* Accent & Semantic Colors */
+  --accent: #2563eb;               /* Links, primary buttons, focus states */
+  --accent-hover: #1d4ed8;         /* Hover state for links/buttons */
+  --accent-foreground: #ffffff;    /* Text/icon color on accent backgrounds */
+
+  --success: #22c55e;              /* Success states */
+  --warning: #f97316;              /* Warning states */
+  --error: #ef4444;                /* Error states */
+
+  /* Borders */
+  --border: #262626;               /* Default borders */
+  --border-strong: #404040;        /* Emphasized borders */
+
+  /* Code Blocks */
+  --code-bg: #171717;              /* Background for code snippets */
+  --code-foreground: #e5e5e5;      /* Text color inside code blocks */
+
+  /* UI Components */
+  --card: #171717;                  /* Card backgrounds */
+  --card-foreground: #fafafa;      /* Text inside cards */
+
+  --input: #171717;                 /* Input field background */
+  --input-border: #262626;          /* Default input borders */
+  --input-focus: #3b82f6;           /* Input focus outline / border */
+
+  --tag-bg: #262626;                /* Tag/pill background */
+  --tag-foreground: #a3a3a3;        /* Tag/pill text */
+  --tag-border: #404040;            /* Tag/pill border */
+}
+
+body {
+  font-family: "Inter", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  font-size: 1rem;     
+  background-color: var(--background);
+  color: var(--foreground);
+  line-height: 1.25;
+}
