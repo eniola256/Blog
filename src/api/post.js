@@ -2,6 +2,8 @@
 // src/api/post.js
 const API = import.meta.env.VITE_API_URL;
 
+
+
 export async function fetchPublicPosts(params = "") {
   const res = await fetch(`${API}/api/public/posts${params}`);
   if (!res.ok) {
