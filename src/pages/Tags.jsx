@@ -10,7 +10,11 @@ export default function Tags() {
 
   useEffect(() => {
     fetchTags()
-      .then(data => setTags(data.tags))
+      .then(data => {
+        // Handle different response formats
+        const tagsArray = Array.isArray(data) ? data : (data.tags || data.data || []);
+        setTags(tagsArray);
+      })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
   }, []);

@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import Icon from "./Icon";
+import { Link } from "react-router-dom";
 import "./NavBar.css";
+import { useAuth } from "../contexts/AuthContext";
+
 
 export default function Navbar() {
   const { isDark, setIsDark } = useTheme();
+   const { user, isAuthenticated, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -12,11 +16,21 @@ export default function Navbar() {
       <h1 className="logo">AE Tech</h1>
 
       <div className={`nav-items ${menuOpen ? "open" : ""}`}>
-        <a href="#">Home</a>
-        <a href="#">Blog</a>
-        <a href="#">Tags</a>
-        <a href="#">Categories</a>
+        <Link to="/">Home</Link>
+        <Link to="/blog">Blog</Link>
+        <Link to="/posts">Posts</Link>
+        <Link to="/categories">Categories</Link>
+
+        {isAuthenticated && user.role === "admin" && (
+          <Link to="/admin">Dashboard</Link>
+        )}
+
+        {isAuthenticated && user.role === "author" && (
+          <Link to="/author">My Posts</Link>
+        )}
       </div>
+
+
 
       <div className="nav-actions">
         {/* Theme toggle */}
@@ -31,6 +45,17 @@ export default function Navbar() {
             <Icon name="dark_mode" size={24} />
           )}
         </button>
+
+        {!isAuthenticated ? (
+            <Link to="/login" className="auth-link">
+              Login
+            </Link>
+          ) : (
+            <button className="auth-link" onClick={logout}>
+              Logout
+            </button>
+          )}
+
 
         {/* Hamburger */}
         <button

@@ -20,7 +20,8 @@
   /* Accent & Semantic Colors */
   --accent: #3b82f6;               /* Links, primary buttons, focus states */
   --accent-hover: #60a5fa;          /* Hover state for links/buttons */
-  --accent-foreground: #ffffff;     /* Text/icon color on accent backgrounds */
+  --accent-foreground: #ffffff;
+  --icon-background: #4586f03f;       /* Background color for icons on accent backgrounds */
 
   --success: #16a34a;               /* Success states (e.g., notifications, badges) */
   --warning: #ea580c;               /* Warning states (e.g., alerts) */
@@ -109,9 +110,12 @@
 body {
   font-family: "Inter", sans-serif;
   font-weight: 400;
-  font-style: normal;
   font-size: 1rem;     
   background-color: var(--background);
   color: var(--foreground);
   line-height: 1.25;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 400;
 }

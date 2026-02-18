@@ -1,0 +1,138 @@
+.not-showing {
+  display: none;
+}
+
+.C-main{
+    padding: 50px 60px;
+}
+
+.c-main-heading{
+    width: 60%;
+    display: flex;
+    flex-direction: column;
+    gap: 8apx;
+}
+.c-main-head .icon span{
+    font-size: 35px;
+    border-radius: 50%;
+    background-color: var(--icon-background) ;
+    padding: 7px;
+    color: var(--accent);
+    font-weight: 100;
+} 
+.c-main-head{
+    display: flex;
+    align-items: start;
+    gap: 15px;
+    
+}
+.c-main-head h2 span{
+    font-size: 15px;
+    color: var(--foreground-secondary);
+}
+.c-main-head h2{
+    display: flex;
+    flex-direction: column;
+    font-size: 2.4rem;
+    font-weight: 300;
+}
+.c-main-p{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.c-main-p p{
+    color: var(--foreground-secondary);
+    font-size: 1.1rem;
+    font-weight: 300;
+}
+.c-main-p .cmp-b{
+    font-size: 15px;
+}
+
+/* GRID */
+.posts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+  padding: 40px 60px;
+}
+
+/* CARD */
+.post-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  border-radius: 16px;
+  overflow: hidden;
+  text-decoration: none;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.post-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+}
+
+/* IMAGE */
+.post-image {
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  margin-bottom: 35px;
+}
+
+.post-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  
+}
+
+/* CONTENT */
+.post-content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* TAGS */
+.post-tags{
+    display: flex;
+    gap: 10px;
+}
+.post-tags p {
+  font-size: 13px;
+  color: var(--accent);
+  padding: 5px;
+  border-radius: 10px;
+  border: 1px solid var(--tag-border);
+}
+
+/* TITLE */
+.post-title {
+  font-size: 1.2rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* EXCERPT */
+.post-excerpt {
+  font-size: 0.95rem;
+  color: var(--foreground-secondary);
+  line-height: 1.6;
+}
+
+/* META */
+.post-meta {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--foreground-secondary);
+  width: 100%;
+  justify-content: space-between;
+}

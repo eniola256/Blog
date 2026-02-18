@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { fetchPublicPostBySlug } from "../api/post.js";
 
 // PostDetails.jsx
