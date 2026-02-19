@@ -182,3 +182,16 @@ export async function fetchAdminStats() {
   }
   return res.json();
 }
+
+// Toggle like on a post
+export async function toggleLikePost(postId) {
+  const res = await fetch(`${API}/api/posts/${postId}/like`, {
+    method: "POST",
+    headers: getHeaders(),
+  });
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.message || "Failed to toggle like");
+  }
+  return res.json();
+}

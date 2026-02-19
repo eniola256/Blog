@@ -10,6 +10,7 @@ import CategoryPosts from "./pages/CategoryPosts.jsx";
 import TagPosts from "./pages/TagPosts.jsx";
 import Tags from "./pages/Tags.jsx";
 import Posts from "./pages/Posts.jsx";
+import Blog from "./pages/Blog.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 
 // Admin imports
@@ -28,6 +29,7 @@ export default function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
+            <Route path="/blog" element={<Blog />} />
             <Route path="/posts/:slug" element={<PostDetails />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/posts" element={<Posts />} />
