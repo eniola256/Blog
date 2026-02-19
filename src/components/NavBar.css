@@ -37,6 +37,8 @@
     cursor: pointer;
     font-size: 1.5rem;
     color: var(--foreground);
+    padding-top: 5px;
+
 }
 
 .nav-actions {
@@ -51,6 +53,19 @@
   border: none;
   cursor: pointer;
   color: var(--foreground);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+}
+
+.auth-link{
+  background-color:  var(--accent);
+  border-radius: 20px;
+  padding: 4px 8px;
+  color: #ffffff;
+  
 }
 
 @media (max-width: 768px) {

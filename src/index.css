@@ -66,6 +66,10 @@
   --space-16: 4rem;    /* 64px */
 }
 
+a{
+  text-decoration: none;
+}
+
 .dark {
   /* Backgrounds */
   --background: #0a0a0a;          /* Primary page background */

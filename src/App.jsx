@@ -11,6 +11,7 @@ import TagPosts from "./pages/TagPosts.jsx";
 import Tags from "./pages/Tags.jsx";
 import Posts from "./pages/Posts.jsx";
 import Blog from "./pages/Blog.jsx";
+import Contact from "./pages/Contact.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 
 // Admin imports
@@ -20,6 +21,12 @@ import AdminPosts from "./pages/admin/AdminPosts.jsx";
 import AdminCreatePost from "./pages/admin/AdminCreatePost.jsx";
 import AdminCategories from "./pages/admin/AdminCategories.jsx";
 import AdminTags from "./pages/admin/AdminTags.jsx";
+
+// Author imports
+import AuthorDashboard from "./pages/author/AuthorDashboard.jsx";
+import AuthorOverview from "./pages/author/AuthorOverview.jsx";
+import AuthorPosts from "./pages/author/AuthorPosts.jsx";
+import AuthorCreatePost from "./pages/author/AuthorCreatePost.jsx";
 
 export default function App() {
   return (
@@ -36,6 +43,7 @@ export default function App() {
             <Route path="/category/:slug" element={<CategoryPosts />} />
             <Route path="/tags" element={<Tags />} />
             <Route path="/tag/:slug" element={<TagPosts />} />
+            <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />
 
             {/* Admin Routes */}
@@ -55,6 +63,21 @@ export default function App() {
               <Route path="tags" element={<AdminTags />} />
               <Route path="users" element={<div style={{ padding: "40px", textAlign: "center", color: "var(--admin-text-muted)" }}>Users Management - Coming Soon</div>} />
               <Route path="settings" element={<div style={{ padding: "40px", textAlign: "center", color: "var(--admin-text-muted)" }}>Settings - Coming Soon</div>} />
+            </Route>
+
+            {/* Author Routes */}
+            <Route
+              path="/author"
+              element={
+                <ProtectedRoute role="author">
+                  <AuthorDashboard />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<AuthorOverview />} />
+              <Route path="posts" element={<AuthorPosts />} />
+              <Route path="posts/new" element={<AuthorCreatePost />} />
+              <Route path="posts/:id" element={<AuthorCreatePost />} />
             </Route>
           </Routes>
         </Layout>

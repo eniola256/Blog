@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { fetchPublicPosts } from "../api/post";
 import { Link } from "react-router-dom";
+import NewsletterPopup from "../components/NewsletterPopup";
 import "./Home.css";
 
 export default function Home() {
@@ -43,6 +44,7 @@ export default function Home() {
 
   return (
     <>  
+    <NewsletterPopup />
     <div id="Home">
       <div className= "homepage">
         <main className={`home-main ${animate ? 'slide-up' : ''}`}>
@@ -71,10 +73,10 @@ export default function Home() {
                   <p className="post-content">
                     {featuredPost.content?.substring(0, 150)}...
                   </p>
-                  <p>
+                  <p className="featured-date-time"> 
                     {featuredPost.author?.name || 'AE Hobs'} 
-                    <span>.</span> 
-                    <span>{new Date(featuredPost.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                    <span className="dot"></span> 
+                    <span className="d-t">{new Date(featuredPost.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                   </p>
                 </div>
               </div>

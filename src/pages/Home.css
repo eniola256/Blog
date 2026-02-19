@@ -84,7 +84,7 @@ section {
     background-color: var(--accent);
     color: var(--accent-foreground);
     display: inline-block;
-    padding: var(--space-3);
+    padding: 9px;
     border-radius: 20px;
 }
 
@@ -118,10 +118,29 @@ section {
 .featured-post-txt h3{
     font-size:2rem ;
     font-weight: 400;
+    color: var(--code-foreground);
 }
 .featured-post-txt .post-content{
     font-size: 1.2rem;
     color: var(--foreground-secondary);
+    padding: 0;
+}
+
+.featured-date-time{
+  display: flex;
+  gap: 10px;
+  color: var(--foreground-secondary);
+  align-items: center;
+}
+.dot{
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background-color:var(--foreground-muted);
+}
+.d-t{
+  font-size: 12px;
+  color: var(--foreground-muted);
 }
 
 .pst{

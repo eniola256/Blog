@@ -20,6 +20,7 @@ export default function Navbar() {
         <Link to="/blog">Blog</Link>
         <Link to="/posts">Posts</Link>
         <Link to="/categories">Categories</Link>
+        <Link to="/contact">Contact</Link>
 
         {isAuthenticated && user.role === "admin" && (
           <Link to="/admin">Dashboard</Link>
@@ -33,7 +34,17 @@ export default function Navbar() {
 
 
       <div className="nav-actions">
-        {/* Theme toggle */}
+        {!isAuthenticated ? (
+            <Link to="/login" className="auth-link">
+              Sign in
+            </Link>
+          ) : (
+            <button className="auth-link" onClick={logout}>
+              Sign out
+            </button>
+          )}
+
+          {/* Theme toggle */}
         <button
           className="theme-toggle"
           onClick={() => setIsDark(prev => !prev)}
@@ -45,17 +56,6 @@ export default function Navbar() {
             <Icon name="dark_mode" size={24} />
           )}
         </button>
-
-        {!isAuthenticated ? (
-            <Link to="/login" className="auth-link">
-              Login
-            </Link>
-          ) : (
-            <button className="auth-link" onClick={logout}>
-              Logout
-            </button>
-          )}
-
 
         {/* Hamburger */}
         <button
