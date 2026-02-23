@@ -1,4 +1,4 @@
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const API = import.meta.env.VITE_API_URL;
 
 /**
  * Subscribe to newsletter
@@ -6,7 +6,7 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
  * @returns {Promise<Object>} - Subscription result
  */
 export async function subscribe(email) {
-  const response = await fetch(`${API_URL}/subscribers/subscribe`, {
+  const response = await fetch(`${API}/api/subscribers/subscribe`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -28,7 +28,7 @@ export async function subscribe(email) {
  * @returns {Promise<Object>} - Unsubscription result
  */
 export async function unsubscribe(email) {
-  const response = await fetch(`${API_URL}/subscribers/unsubscribe`, {
+  const response = await fetch(`${API}/api/subscribers/unsubscribe`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -52,7 +52,7 @@ export async function unsubscribe(email) {
  */
 export async function getSubscribers(token, params = {}) {
   const queryString = new URLSearchParams(params).toString();
-  const url = `${API_URL}/subscribers${queryString ? `?${queryString}` : ""}`;
+  const url = `${API}/api/subscribers${queryString ? `?${queryString}` : ""}`;
 
   const response = await fetch(url, {
     headers: {
@@ -75,7 +75,7 @@ export async function getSubscribers(token, params = {}) {
  * @returns {Promise<Object>} - Deletion result
  */
 export async function deleteSubscriber(token, id) {
-  const response = await fetch(`${API_URL}/subscribers/${id}`, {
+  const response = await fetch(`${API}/api/subscribers/${id}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,

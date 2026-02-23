@@ -14,14 +14,16 @@ export default function NewsletterPopup() {
     const hasClosedPopup = localStorage.getItem("newsletterPopupClosed");
     const hasSubscribed = localStorage.getItem("newsletterSubscribed");
 
-    if (!hasClosedPopup && !hasSubscribed) {
-      // Show popup after 3 seconds
-      const timer = setTimeout(() => {
-        setIsVisible(true);
-      }, 3000);
+    console.log("NewsletterPopup - hasClosedPopup:", hasClosedPopup);
+    console.log("NewsletterPopup - hasSubscribed:", hasSubscribed);
 
-      return () => clearTimeout(timer);
-    }
+    // Show popup after 3 seconds (for testing, you can remove the condition)
+    const timer = setTimeout(() => {
+      console.log("NewsletterPopup - showing popup");
+      setIsVisible(true);
+    }, 3000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const handleClose = () => {
