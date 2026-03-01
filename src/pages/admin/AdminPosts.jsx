@@ -43,15 +43,20 @@ export default function AdminPosts() {
       return;
     }
 
-    try {
-      setDeleting(postId);
-      await deletePost(postId);
-      setPosts(posts.filter(p => (p._id || p) !== postId));
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setDeleting(null);
-    }
+      try {
+    setDeleting(postId);
+    await deletePost(postId);
+    
+    // Fix: Update the nested posts array
+    setPosts({
+      ...posts,
+      posts: (posts?.posts || []).filter(p => (p._id || p) !== postId)
+    });
+  } catch (err) {
+    setError(err.message);
+  } finally {
+    setDeleting(null);
+  }
   };
 
   // Filter posts locally (for now)

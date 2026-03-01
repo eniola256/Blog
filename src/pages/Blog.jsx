@@ -12,8 +12,10 @@ export default function Blog() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [email, setEmail] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
 
-  const POSTS_PER_PAGE = 9;
+  const POSTS_PER_PAGE = 6;
 
   useEffect(() => {
     loadData();
@@ -50,10 +52,14 @@ export default function Blog() {
     return matchesSearch && matchesCategory;
   });
 
-  // Pagination
-  const totalPages = Math.ceil(filteredPosts.length / POSTS_PER_PAGE);
+  // Get featured post (first post)
+  const featuredPost = filteredPosts[0];
+  const regularPosts = filteredPosts.slice(1);
+
+  // Pagination for regular posts
+  const totalPages = Math.ceil(regularPosts.length / POSTS_PER_PAGE);
   const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
-  const paginatedPosts = filteredPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
+  const paginatedPosts = regularPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -68,6 +74,21 @@ export default function Blog() {
     return `${minutes} min read`;
   };
 
+  // Strip HTML from content
+  const stripHtml = (content) => {
+    if (!content) return "";
+    return content.replace(/<[^>]*>/g, "");
+  };
+
+  // Handle newsletter subscription
+  const handleSubscribe = (e) => {
+    e.preventDefault();
+    if (email) {
+      setSubscribed(true);
+      setEmail("");
+    }
+  };
+
   if (loading) {
     return (
       <div className="blog-loading">
@@ -80,9 +101,10 @@ export default function Blog() {
   if (error) {
     return (
       <div className="blog-error">
-        <h2>Oops! Something went wrong</h2>
+        <div className="blog-error-icon">⚠️</div>
+        <h2>Something went wrong</h2>
         <p>{error}</p>
-        <button onClick={loadData}>Try Again</button>
+        <button onClick={loadData} className="blog-error-btn">Try Again</button>
       </div>
     );
   }
@@ -92,16 +114,11 @@ export default function Blog() {
       {/* Hero Section */}
       <section className="blog-hero">
         <div className="blog-hero-content">
+          <span className="blog-hero-badge">Welcome to</span>
           <h1>AE Tech Blog</h1>
-          <p>Explore the latest in gaming, technology, AI, and coding. Your source for insightful articles and tutorials.</p>
-        </div>
-      </section>
-
-      <div className="blog-container">
-        {/* Search and Filter Section */}
-        <section className="blog-filters">
-          <div className="blog-search">
-            <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <p>Discover insights on gaming, technology, AI, and coding. Your daily source for thoughtful articles and in-depth tutorials.</p>
+          <div className="blog-hero-search">
+            <svg className="hero-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8"></circle>
               <path d="m21 21-4.35-4.35"></path>
             </svg>
@@ -112,91 +129,199 @@ export default function Blog() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+        </div>
+      </section>
 
-          <div className="blog-category-tabs">
-            <button
-              className={`category-tab ${selectedCategory === "all" ? "active" : ""}`}
-              onClick={() => setSelectedCategory("all")}
-            >
-              All
-            </button>
-            {categories.map(cat => (
+      <div className="blog-container">
+        {/* Filters Bar */}
+        <section className="blog-filters">
+          <div className="blog-filters-wrapper">
+            <div className="blog-filter-chips">
               <button
-                key={cat._id || cat}
-                className={`category-tab ${selectedCategory === (cat.slug || cat._id || cat) ? "active" : ""}`}
-                onClick={() => setSelectedCategory(cat.slug || cat._id || cat)}
+                className={`filter-chip ${selectedCategory === "all" ? "active" : ""}`}
+                onClick={() => setSelectedCategory("all")}
               >
-                {cat.name || cat}
+                All Posts
               </button>
-            ))}
+              {categories.map(cat => (
+                <button
+                  key={cat._id || cat}
+                  className={`filter-chip ${selectedCategory === (cat.slug || cat._id || cat) ? "active" : ""}`}
+                  onClick={() => setSelectedCategory(cat.slug || cat._id || cat)}
+                >
+                  {cat.name || cat}
+                </button>
+              ))}
+            </div>
           </div>
         </section>
 
         <div className="blog-main">
-          {/* Posts Grid */}
-          <section className="blog-posts-grid">
-            {paginatedPosts.length > 0 ? (
-              paginatedPosts.map(post => (
-                <article key={post._id} className="blog-post-card">
-                  <Link to={`/posts/${post.slug}`}>
-                    <div className="blog-post-image">
-                      {post.featuredImage ? (
-                        <img src={post.featuredImage} alt={post.title} />
-                      ) : (
-                        <div className="blog-post-placeholder">
-                          <span>📝</span>
+          {/* Primary Content */}
+          <div className="blog-primary">
+            {/* Featured Post */}
+            {featuredPost && currentPage === 1 && (
+              <article className="blog-featured-card">
+                <Link to={`/posts/${featuredPost.slug}`}>
+                  <div className="blog-featured-image">
+                    {featuredPost.featuredImage ? (
+                      <img src={featuredPost.featuredImage} alt={featuredPost.title} />
+                    ) : (
+                      <div className="blog-featured-placeholder">
+                        <span>AE</span>
+                      </div>
+                    )}
+                    <div className="blog-featured-overlay"></div>
+                  </div>
+                  <div className="blog-featured-content">
+                    <div className="blog-featured-meta">
+                      <span className="blog-featured-category">
+                        {featuredPost.category?.name || "Uncategorized"}
+                      </span>
+                      <span className="blog-featured-date">
+                        {new Date(featuredPost.createdAt).toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric"
+                        })}
+                      </span>
+                    </div>
+                    <h2 className="blog-featured-title">{featuredPost.title}</h2>
+                    <p className="blog-featured-excerpt">
+                      {stripHtml(featuredPost.content)?.substring(0, 200)}...
+                    </p>
+                    <div className="blog-featured-footer">
+                      <div className="blog-featured-author">
+                        <div className="blog-featured-avatar">
+                          {featuredPost.author?.name?.charAt(0) || "A"}
                         </div>
-                      )}
-                    </div>
-                    <div className="blog-post-content">
-                      <div className="blog-post-meta">
-                        <span className="blog-post-category">
-                          {post.category?.name || "Uncategorized"}
-                        </span>
-                        <span className="blog-post-date">
-                          {new Date(post.createdAt).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric"
-                          })}
-                        </span>
+                        <div className="blog-featured-author-info">
+                          <span className="blog-featured-author-name">
+                            {featuredPost.author?.name || "AE Hobs"}
+                          </span>
+                          <span className="blog-featured-readtime">
+                            {getReadTime(featuredPost.content)}
+                          </span>
+                        </div>
                       </div>
-                      <h2 className="blog-post-title">{post.title}</h2>
-                      <p className="blog-post-excerpt">
-                        {post.content?.substring(0, 120)}...
-                      </p>
-                      <div className="blog-post-footer">
-                        <span className="blog-post-author">
-                          {post.author?.name || "AE Hobs"}
-                        </span>
-                        <span className="blog-post-readtime">
-                          {getReadTime(post.content)}
-                        </span>
-                      </div>
+                      <span className="blog-featured-arrow">→</span>
                     </div>
-                  </Link>
-                </article>
-              ))
-            ) : (
-              <div className="blog-empty">
-                <h3>No articles found</h3>
-                <p>Try adjusting your search or filter criteria</p>
+                  </div>
+                </Link>
+              </article>
+            )}
+
+            {/* Posts Grid */}
+            <section className="blog-posts-grid">
+              {paginatedPosts.length > 0 ? (
+                paginatedPosts.map(post => (
+                  <article key={post._id} className="blog-post-card">
+                    <Link to={`/posts/${post.slug}`}>
+                      <div className="blog-post-image">
+                        {post.featuredImage ? (
+                          <img src={post.featuredImage} alt={post.title} />
+                        ) : (
+                          <div className="blog-post-placeholder">
+                            <span>AE</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="blog-post-content">
+                        <div className="blog-post-meta">
+                          <span className="blog-post-category">
+                            {post.category?.name || "Uncategorized"}
+                          </span>
+                          <span className="blog-post-date">
+                            {new Date(post.createdAt).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric"
+                            })}
+                          </span>
+                        </div>
+                        <h3 className="blog-post-title">{post.title}</h3>
+                        <p className="blog-post-excerpt">
+                          {stripHtml(post.content)?.substring(0, 100)}...
+                        </p>
+                        <div className="blog-post-footer">
+                          <span className="blog-post-author">
+                            {post.author?.name || "AE Hobs"}
+                          </span>
+                          <span className="blog-post-readtime">
+                            {getReadTime(post.content)}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
+                  </article>
+                ))
+              ) : (
+                <div className="blog-empty">
+                  <div className="blog-empty-icon">📝</div>
+                  <h3>No articles found</h3>
+                  <p>Try adjusting your search or filter criteria</p>
+                </div>
+              )}
+            </section>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="blog-pagination">
+                <button
+                  className="pagination-btn pagination-prev"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M15 18l-6-6 6-6" />
+                  </svg>
+                  Previous
+                </button>
+                <div className="pagination-numbers">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      className={`pagination-number ${currentPage === page ? "active" : ""}`}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  className="pagination-btn pagination-next"
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                </button>
               </div>
             )}
-          </section>
+          </div>
 
           {/* Sidebar */}
           <aside className="blog-sidebar">
             {/* Popular Posts */}
-            <div className="blog-sidebar-section">
-              <h3>Popular Posts</h3>
-              <div className="blog-popular-posts">
-                {posts.slice(0, 3).map((post, index) => (
-                  <Link to={`/posts/${post.slug}`} key={post._id} className="blog-popular-item">
-                    <span className="blog-popular-number">{index + 1}</span>
-                    <div className="blog-popular-content">
+            <div className="sidebar-card sidebar-popular">
+              <h3 className="sidebar-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                </svg>
+                Popular Posts
+              </h3>
+              <div className="popular-list">
+                {posts.slice(0, 4).map((post, index) => (
+                  <Link to={`/posts/${post.slug}`} key={post._id} className="popular-item">
+                    <div className="popular-number">{String(index + 1).padStart(2, '0')}</div>
+                    <div className="popular-content">
                       <h4>{post.title}</h4>
-                      <span>{getReadTime(post.content)}</span>
+                      <span className="popular-meta">
+                        <span className="popular-category">{post.category?.name || "General"}</span>
+                        <span className="popular-dot">•</span>
+                        <span>{getReadTime(post.content)}</span>
+                      </span>
                     </div>
                   </Link>
                 ))}
@@ -204,17 +329,22 @@ export default function Blog() {
             </div>
 
             {/* Categories */}
-            <div className="blog-sidebar-section">
-              <h3>Categories</h3>
-              <div className="blog-sidebar-categories">
+            <div className="sidebar-card sidebar-categories">
+              <h3 className="sidebar-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                </svg>
+                Categories
+              </h3>
+              <div className="categories-list">
                 {categories.map(cat => (
                   <Link 
                     to={`/category/${cat.slug || cat._id || cat}`} 
                     key={cat._id || cat}
-                    className="blog-sidebar-category"
+                    className="category-item"
                   >
-                    <span>{cat.name || cat}</span>
-                    <span className="blog-category-count">
+                    <span className="category-name">{cat.name || cat}</span>
+                    <span className="category-count">
                       {posts.filter(p => p.category?.slug === (cat.slug || cat._id) || p.category?._id === (cat._id || cat)).length}
                     </span>
                   </Link>
@@ -223,47 +353,57 @@ export default function Blog() {
             </div>
 
             {/* Newsletter */}
-            <div className="blog-sidebar-section blog-newsletter">
-              <h3>Newsletter</h3>
-              <p>Get the latest articles delivered to your inbox</p>
-              <form onSubmit={(e) => e.preventDefault()}>
-                <input type="email" placeholder="Enter your email" />
-                <button type="submit">Subscribe</button>
-              </form>
+            <div className="sidebar-card sidebar-newsletter">
+              <div className="newsletter-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                  <polyline points="22,6 12,13 2,6" />
+                </svg>
+              </div>
+              <h3 className="sidebar-title">Subscribe to Newsletter</h3>
+              <p>Get the latest articles and insights delivered straight to your inbox.</p>
+              {subscribed ? (
+                <div className="newsletter-success">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                  <span>Thanks for subscribing!</span>
+                </div>
+              ) : (
+                <form onSubmit={handleSubscribe} className="newsletter-form">
+                  <input 
+                    type="email" 
+                    placeholder="Enter your email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                  <button type="submit">Subscribe</button>
+                </form>
+              )}
+            </div>
+
+            {/* Tags Cloud */}
+            <div className="sidebar-card sidebar-tags">
+              <h3 className="sidebar-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                  <line x1="7" y1="7" x2="7.01" y2="7" />
+                </svg>
+                Popular Tags
+              </h3>
+              <div className="tags-cloud">
+                <Link to="/tags" className="tag-item">Technology</Link>
+                <Link to="/tags" className="tag-item">AI</Link>
+                <Link to="/tags" className="tag-item">Gaming</Link>
+                <Link to="/tags" className="tag-item">Coding</Link>
+                <Link to="/tags" className="tag-item">Web Dev</Link>
+                <Link to="/tags" className="tag-item">Tutorials</Link>
+              </div>
             </div>
           </aside>
         </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="blog-pagination">
-            <button
-              className="blog-pagination-btn"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-            >
-              ← Previous
-            </button>
-            <div className="blog-pagination-numbers">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                <button
-                  key={page}
-                  className={`blog-pagination-number ${currentPage === page ? "active" : ""}`}
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
-                </button>
-              ))}
-            </div>
-            <button
-              className="blog-pagination-btn"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Next →
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

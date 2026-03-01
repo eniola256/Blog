@@ -48,10 +48,10 @@ export default function Home() {
     <div id="Home">
       <div className= "homepage">
         <main className={`home-main ${animate ? 'slide-up' : ''}`}>
-          <div className="home-main-left">
+          
           <h1>Welcome to <br />AE Tech/Gaming Blog</h1>
           <p>Thoughtful explorations on productivity, creativity, wellness, and living intentionally. Join our community of curious minds seeking meaningful insights</p>
-          </div>
+          
         </main>
 
         <section className="featured-story">
@@ -66,6 +66,9 @@ export default function Home() {
                     <img src={featuredPost.featuredImage} alt={featuredPost.title} />
                   ) : (
                     <img src="fs.jpg" alt="Featured" />
+                  )}
+                  {featuredPost.category?.name && (
+                    <span className="featured-category">{featuredPost.category.name}</span>
                   )}
                 </div>
                 <div className="featured-post-txt">
@@ -89,6 +92,7 @@ export default function Home() {
               <div className="fs-content">
                 <div className="img">
                   <img src="fs.jpg" alt="Manja Vs Odunwire" />
+                  <span className="featured-category">Tech</span>
                 </div>
                 <div className="featured-post-txt">
                   <h3>Manja Vs Odunwire: The Ultimate Tech Showdown</h3>
@@ -167,6 +171,34 @@ export default function Home() {
           )}
           </div>
         </section>
+
+        <footer className="home-footer">
+          <div className="footer-content">
+            <div className="footer-brand">
+              <h3>AE Tech/Gaming Blog</h3>
+              <p>Thoughtful explorations on productivity, creativity, wellness, and living intentionally.</p>
+            </div>
+            <div className="footer-links">
+              <div className="footer-section">
+                <h4>Quick Links</h4>
+                <Link to="/">Home</Link>
+                <Link to="/posts">Posts</Link>
+                <Link to="/categories">Categories</Link>
+                <Link to="/contact">Contact</Link>
+              </div>
+              <div className="footer-section">
+                <h4>Categories</h4>
+                <Link to="/categories">Technology</Link>
+                <Link to="/categories">Gaming</Link>
+                <Link to="/categories">Productivity</Link>
+                <Link to="/categories">Lifestyle</Link>
+              </div>
+            </div>
+          </div>
+          <div className="footer-bottom">
+            <p>&copy; {new Date().getFullYear()} AE Tech/Gaming Blog. All rights reserved.</p>
+          </div>
+        </footer>
       </div>
     </div>
     </>

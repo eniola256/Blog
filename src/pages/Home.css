@@ -4,14 +4,13 @@ section {
 
 .home-main{
     display: flex; 
-    
-    gap: 5px;
-    padding: var(--space-16);
-    
+    padding: 6rem 4rem;
     opacity: 0;
     transform: translateY(40px);
     transition: transform 0.8s ease-out, opacity 0.8s ease-out;
-    gap: 5rem;
+    gap: 1.4rem;
+    flex-direction: column;
+    width: 85%;
 }
 
 .home-main-left{
@@ -99,7 +98,7 @@ section {
     height: 30rem;
     overflow: hidden;
     background-color: black;
-    
+    position: relative;
 }
 
 .fs .img img{
@@ -109,6 +108,20 @@ section {
     border-radius: var(--radius-8);
     border: 1px solid var(--border-strong);
 }
+
+.featured-category{
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background-color: var(--foreground);
+    color: var(--surface);
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 1.3rem;
+    font-weight: 500;
+    z-index: 1;
+}
+
 .featured-post-txt{
     display: flex;
     flex-direction: column;
@@ -155,6 +168,10 @@ section {
   margin-bottom: 20px;
   font-size: 28px;
   font-weight: 400;
+}
+
+.latest-news h3{
+  color: var(--code-foreground);
 }
 
 .latest-grid {
@@ -224,6 +241,12 @@ section {
   height: 100%;
   object-fit: cover;
   border-radius: 8px;
+}
+
+.latest-card a{
+  width: 100%;
+  height: 20px;
+  color: #000;
 }
 
 .ph-text {
@@ -301,21 +324,28 @@ section {
 
 @media (max-width: 768px) {
   .homepage {
-    padding: var(--space-6);
+    padding: 0;
+    width: 100%;
   }
 
   .home-main {
-    padding-top: 3rem;
+    
     gap: 14px;
+    width: 90%;
+    padding: var(--space-16) var(--space-12) var(--space-8) ;
+    
   }
 
   .home-main h1 {
-    font-size: 2.4rem;
-    line-height: 1.2;
+    font-size: 2.9rem;
   }
 
   .home-main p {
-    font-size: 1.1rem;
+    font-size: 1.2rem;
+  }
+
+  .featured-story{
+    padding: var(--space-6) var(--space-12) ;
   }
 
   .fs .img {
@@ -326,17 +356,39 @@ section {
     font-size: 1.4rem;
   }
 
+  .latest-news{
+    padding: var(--space-10) var(--space-16) ;
+    width: 100%;
+    background: var(--surface);
+  }
+
+  .latest-news h2{
+    margin-bottom: 30px;
+  }
+
   .latest-grid {
     grid-template-columns: 1fr;
   }
 
   .latest-card {
     height: auto;
+    gap: 20px;
+  }
+  .latest-card h3 {
+    font-size: 1.8rem;
+    color: var(--foreground-secondary);
   }
 
   .pagination {
     flex-wrap: wrap;
     gap: 6px;
+  }
+
+  .home-footer{
+    padding: 0;
+  }
+  .footer-content{
+    padding: var(--space-6) var(--space-12) ;
   }
 }
 
@@ -379,5 +431,114 @@ section {
 .latest-card{
     height: 27rem;
 }
+
+.footer-links {
+  display: flex;
+  gap: var(--space-12);
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+}
+
+/* Footer Styles */
+.home-footer {
+  border-top: 1px solid var(--border);
+  padding: 50px 0 20px;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-brand {
+  flex: 1;
+  min-width: 280px;
+}
+
+.footer-brand h3 {
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--foreground);
+}
+
+.footer-brand p {
+  color: var(--foreground-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.footer-links {
+  display: flex;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+}
+
+.footer-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.footer-section h4 {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--foreground);
+  margin-bottom: var(--space-2);
+}
+
+.footer-section a {
+  color: var(--foreground-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+
+.footer-section a:hover {
+  color: var(--accent);
+}
+
+.footer-bottom {
+  margin-top: var(--space-10);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.footer-bottom p {
+  color: var(--foreground-muted);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .home-footer {
+    padding: var(--space-10) var(--space-6) var(--space-6);
+  }
+
+  .footer-content {
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .footer-brand {
+    min-width: 100%;
+  }
+
+  .footer-links {
+    justify-content: space-between;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-links {
+    flex-direction: column;
+    gap: var(--space-6);
+  }
 }
 

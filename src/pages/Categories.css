@@ -55,9 +55,24 @@
 }
 
 .category-icon {
-  color: var(--accent);
-  font-size: 48px !important;
+  color:#fafafa;
+  font-size: 40px !important;
   margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border: 2px solid var(--border);
+  border-radius: 50%;
+  background: var(--accent);
+  transition: all 0.3s ease;
+}
+
+.category-card:hover .category-icon {
+  border-color: var(--accent);
+  color: var(--accent-hover);
+  background: rgba(59, 130, 246, 0.05);
 }
 
 .category-card h2 {

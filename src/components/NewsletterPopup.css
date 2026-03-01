@@ -64,30 +64,25 @@
   background-color: var(--border, #eee);
 }
 
-.newsletter-close .material-symbols-outlined {
-  font-size: 24px;
-}
+
 
 .newsletter-content {
   padding: 40px 32px 32px;
   text-align: center;
 }
 
-.newsletter-icon {
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 24px;
-  background: linear-gradient(135deg, var(--accent, #6366f1), var(--accent-hover, #4f46e5));
+.newsletter-icon span{
+  display: none;
+  padding: 15px;
+  background: var(--accent);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 30px;
 }
 
-.newsletter-icon .material-symbols-outlined {
-  font-size: 36px;
-  color: white;
-}
+
 
 .newsletter-content h2 {
   font-size: 1.75rem;

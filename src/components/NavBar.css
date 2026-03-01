@@ -63,9 +63,13 @@
 .auth-link{
   background-color:  var(--accent);
   border-radius: 20px;
-  padding: 4px 8px;
+  padding: 6px 8px;
   color: #ffffff;
-  
+  border: none;
+}
+.auth-link:hover{
+  background-color: var(--accent-hover);
+  cursor: pointer;
 }
 
 @media (max-width: 768px) {
