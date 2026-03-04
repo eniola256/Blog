@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
+
 /* ========================================
    AE Tech Blog - Contact Page Styles
    Using global CSS variables from index.css
@@ -421,6 +423,11 @@
 .contact-social-link svg {
   width: 20px;
   height: 20px;
+}
+
+.contact-social-link .material-symbols-outlined {
+  font-size: 20px;
+  line-height: 1;
 }
 
 .contact-social-link:hover {

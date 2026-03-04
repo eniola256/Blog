@@ -93,7 +93,7 @@ export default function Blog() {
     return (
       <div className="blog-loading">
         <div className="blog-spinner"></div>
-        <p>Loading articles...</p>
+        <p>Loading posts...</p>
       </div>
     );
   }
@@ -116,7 +116,7 @@ export default function Blog() {
         <div className="blog-hero-content">
           <span className="blog-hero-badge">Welcome to</span>
           <h1>AE Tech Blog</h1>
-          <p>Discover insights on gaming, technology, AI, and coding. Your daily source for thoughtful articles and in-depth tutorials.</p>
+          <p>Discover insights on gaming, technology, AI, and coding. Your daily source for thoughtful posts and in-depth tutorials.</p>
           <div className="blog-hero-search">
             <svg className="hero-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8"></circle>
@@ -124,7 +124,7 @@ export default function Blog() {
             </svg>
             <input
               type="text"
-              placeholder="Search articles..."
+              placeholder="Search posts..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -257,7 +257,7 @@ export default function Blog() {
               ) : (
                 <div className="blog-empty">
                   <div className="blog-empty-icon">📝</div>
-                  <h3>No articles found</h3>
+                  <h3>No posts found</h3>
                   <p>Try adjusting your search or filter criteria</p>
                 </div>
               )}
@@ -361,7 +361,7 @@ export default function Blog() {
                 </svg>
               </div>
               <h3 className="sidebar-title">Subscribe to Newsletter</h3>
-              <p>Get the latest articles and insights delivered straight to your inbox.</p>
+              <p>Get the latest posts and insights delivered straight to your inbox.</p>
               {subscribed ? (
                 <div className="newsletter-success">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

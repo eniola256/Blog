@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Icon from "../../components/Icon";
+import RichTextEditor from "../../components/RichTextEditor";
 import { fetchAdminCategories } from "../../api/category";
 import { fetchAdminTags as fetchTagsList } from "../../api/tag";
 import { createPost, updatePost, fetchAdminPostById } from "../../api/post";
@@ -222,13 +223,10 @@ export default function AdminCreatePost() {
                 </div>
                 <div className="admin-form-group">
                   <label className="admin-form-label">Content</label>
-                  <textarea
-                    className="admin-form-textarea"
-                    placeholder="Write your content here..."
+                  <RichTextEditor
                     value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    required
-                    style={{ minHeight: "300px" }}
+                    onChange={setContent}
+                    placeholder="Write your content here..."
                   />
                 </div>
               </div>
