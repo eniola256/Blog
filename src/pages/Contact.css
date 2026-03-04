@@ -166,31 +166,6 @@
   line-height: 1.5;
 }
 
-/* Error Message */
-.contact-error {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(220, 38, 38, 0.1);
-  border: 1px solid var(--error);
-  border-radius: var(--radius);
-  padding: 16px 20px;
-  margin-bottom: 24px;
-}
-
-.contact-error svg {
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  color: var(--error);
-}
-
-.contact-error p {
-  color: var(--error);
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
 /* Form */
 .contact-form {
   display: flex;

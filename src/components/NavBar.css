@@ -27,10 +27,6 @@
 }
 
 
-.theme-icon {
-    background: none;
-    color: var(--code-foreground);
-}
 .theme-toggle {
     background: none;
     border: none;

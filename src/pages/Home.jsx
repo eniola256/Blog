@@ -64,11 +64,49 @@ export default function Home() {
     });
   }, [user?._id, user?.id]);
 
+  // Skeleton component for initial load - shows content while fetching
+  const SkeletonLoader = () => (
+    <>
+      <div className="skeleton-header">
+        <div className="skeleton skeleton-title"></div>
+        <div className="skeleton skeleton-text"></div>
+      </div>
+
+      <div className="skeleton-featured">
+        <div className="skeleton skeleton-featured-img"></div>
+        <div className="skeleton skeleton-featured-text"></div>
+        <div className="skeleton skeleton-featured-excerpt"></div>
+      </div>
+
+      <section className="latest-news">
+        <div className="lt">
+          <div className="skeleton" style={{ height: '28px', width: '150px', marginBottom: '20px' }}></div>
+          <div className="skeleton-grid">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="skeleton-card">
+                <div className="skeleton skeleton-card-image"></div>
+                <div className="skeleton skeleton-card-category"></div>
+                <div className="skeleton skeleton-card-title"></div>
+                <div className="skeleton skeleton-card-text"></div>
+                <div className="skeleton skeleton-card-footer"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
+  );
+
   if (loading) {
     return (
-      <div className="home-loading">
-        <div className="home-spinner"></div>
-      </div>
+      <>
+        <NewsletterPopup />
+        <div id="Home">
+          <div className="homepage">
+            <SkeletonLoader />
+          </div>
+        </div>
+      </>
     );
   }
   if (error) return <p>{error}</p>;
