@@ -130,13 +130,13 @@ export default function CategoryPosts() {
               <h3 className="post-title">{post.title}</h3>
 
               <p className="post-excerpt">
-                {post.excerpt || post.content?.substring(0, 120) || ''}...
+                {post.excerpt || ""}
               </p>
 
               <div className="post-meta">
                 <span className="author">{post.author?.name || post.author?.username || 'Unknown'}</span>
                 <span className="date">{formatDate(post.createdAt || post.publishedAt)}</span>
-                <span className="read-time">{calculateReadTime(post.content)}</span>
+                <span className="read-time">{post.readTime || calculateReadTime(post.content)}</span>
               </div>
             </div>
           </Link>

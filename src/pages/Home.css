@@ -2,6 +2,29 @@ section {
     padding: var(--space-16);
 }
 
+.home-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    background: var(--surface);
+}
+
+.home-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: home-spin 0.8s linear infinite;
+}
+
+@keyframes home-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 .home-main{
     display: flex; 
     padding: 6rem 4rem;

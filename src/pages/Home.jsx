@@ -1,13 +1,16 @@
 
 import { useEffect, useState } from "react";
 import { fetchPublicPosts } from "../api/post";
+import { trackAnalyticsEvent } from "../api/analytics";
 import { Link } from "react-router-dom";
 import NewsletterPopup from "../components/NewsletterPopup";
+import { useAuth } from "../contexts/AuthContext.jsx";
 import "./Home.css";
 
 export default function Home() {
+  const { user } = useAuth();
   const [featuredPost, setFeaturedPost] = useState(null);
-  const [posts, setPosts] = useState([]);
+  const [latestPosts, setLatestPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [animate, setAnimate] = useState(false);
@@ -15,30 +18,59 @@ export default function Home() {
   // Pagination
   const POSTS_PER_PAGE = 6;
   const [currentPage, setCurrentPage] = useState(1);
-
-  const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
-  const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
-  const paginatedPosts = posts.slice(startIndex, startIndex + POSTS_PER_PAGE);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    fetchPublicPosts("?status=published")
-      .then(data => {
-        const publishedPosts = data.posts || [];
-        setPosts(publishedPosts);
-        // First published post becomes featured
-        if (publishedPosts.length > 0) {
-          setFeaturedPost(publishedPosts[0]);
-        }
-      })
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false));
+    const loadFeatured = async () => {
+      try {
+        const featuredData = await fetchPublicPosts("?page=1&limit=1");
+        const featured = (featuredData.posts || [])[0] || null;
+        setFeaturedPost(featured);
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+    loadFeatured();
   }, []);
+
+  useEffect(() => {
+    const loadLatest = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const exclude = featuredPost?._id ? `&exclude=${featuredPost._id}` : "";
+        const data = await fetchPublicPosts(
+          `?page=${currentPage}&limit=${POSTS_PER_PAGE}${exclude}`
+        );
+        setLatestPosts(data.posts || []);
+        setTotalPages(data.totalPages || 1);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadLatest();
+  }, [currentPage, featuredPost?._id]);
 
   useEffect(() => {
     setAnimate(true);
   }, []);
 
-  if (loading) return <p>Loading posts…</p>;
+  useEffect(() => {
+    trackAnalyticsEvent({
+      eventName: "blog_home_view",
+      userId: user?._id || user?.id || null,
+    });
+  }, [user?._id, user?.id]);
+
+  if (loading) {
+    return (
+      <div className="home-loading">
+        <div className="home-spinner"></div>
+      </div>
+    );
+  }
   if (error) return <p>{error}</p>;
 
 
@@ -74,7 +106,7 @@ export default function Home() {
                 <div className="featured-post-txt">
                   <h3>{featuredPost.title}</h3>
                   <p className="post-content">
-                    {featuredPost.content?.substring(0, 150)}...
+                    {featuredPost.excerpt || ""}
                   </p>
                   <p className="featured-date-time"> 
                     {featuredPost.author?.name || 'AE Hobs'} 
@@ -110,8 +142,8 @@ export default function Home() {
           <h2>Latest News</h2>
 
           <div className="latest-grid">
-            {paginatedPosts.length > 0 ? (
-              paginatedPosts.map(post => (
+            {latestPosts.length > 0 ? (
+              latestPosts.map(post => (
                 <Link to={`/posts/${post.slug}`} key={post._id} className="latest-card">
                   <div className="ph-image">
                     {post.featuredImage ? (
@@ -128,7 +160,7 @@ export default function Home() {
                     <h3>{post.title}</h3>
                   </div>
                   <div className="ph-text">
-                    <p>{post.content?.substring(0, 100)}...</p>
+                    <p>{post.excerpt || ""}</p>
                   </div>
                   <div className="wri-more">
                     <p className="writer">{post.author?.name || 'AE Hobs'}</p>

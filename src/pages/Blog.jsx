@@ -1,40 +1,73 @@
 import { useEffect, useState } from "react";
 import { fetchPublicPosts } from "../api/post";
 import { fetchCategories } from "../api/category";
+import { trackAnalyticsEvent } from "../api/analytics";
+import { useAuth } from "../contexts/AuthContext.jsx";
 import { Link } from "react-router-dom";
 import "./Blog.css";
 
 export default function Blog() {
+  const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
 
-  const POSTS_PER_PAGE = 6;
+  const POSTS_PER_PAGE = 7;
 
   useEffect(() => {
-    loadData();
+    loadCategories();
   }, []);
 
-  const loadData = async () => {
+  useEffect(() => {
+    trackAnalyticsEvent({
+      eventName: "blog_home_view",
+      userId: user?._id || user?.id || null,
+    });
+  }, [user?._id, user?.id]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 350);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    loadPosts();
+  }, [currentPage, debouncedSearch, selectedCategory]);
+
+  const loadCategories = async () => {
+    try {
+      const categoriesData = await fetchCategories();
+      const categoriesArray = Array.isArray(categoriesData) ? categoriesData : (categoriesData.categories || categoriesData.data || []);
+      setCategories(categoriesArray);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const loadPosts = async () => {
     try {
       setLoading(true);
-      const [postsData, categoriesData] = await Promise.all([
-        fetchPublicPosts("?status=published"),
-        fetchCategories()
-      ]);
-      
-      // Handle different response formats
+      setError(null);
+      const params = new URLSearchParams();
+      params.set("page", String(currentPage));
+      params.set("limit", String(POSTS_PER_PAGE));
+      if (debouncedSearch) params.set("search", debouncedSearch);
+      if (selectedCategory !== "all") params.set("category", selectedCategory);
+
+      const postsData = await fetchPublicPosts(`?${params.toString()}`);
       const postsArray = Array.isArray(postsData) ? postsData : (postsData.posts || postsData.data || []);
-      const categoriesArray = Array.isArray(categoriesData) ? categoriesData : (categoriesData.categories || categoriesData.data || []);
-      
       setPosts(postsArray);
-      setCategories(categoriesArray);
+      setTotalPages(postsData.totalPages || 1);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -42,43 +75,14 @@ export default function Blog() {
     }
   };
 
-  // Filter posts by search and category
-  const filteredPosts = posts.filter(post => {
-    const matchesSearch = post.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         post.content?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || 
-                           post.category?.slug === selectedCategory ||
-                           post.category?._id === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
-
   // Get featured post (first post)
-  const featuredPost = filteredPosts[0];
-  const regularPosts = filteredPosts.slice(1);
-
-  // Pagination for regular posts
-  const totalPages = Math.ceil(regularPosts.length / POSTS_PER_PAGE);
-  const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
-  const paginatedPosts = regularPosts.slice(startIndex, startIndex + POSTS_PER_PAGE);
+  const featuredPost = posts[0];
+  const regularPosts = posts.slice(1);
 
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedCategory]);
-
-  // Calculate read time
-  const getReadTime = (content) => {
-    if (!content) return "1 min read";
-    const words = content.split(/\s+/).length;
-    const minutes = Math.ceil(words / 200);
-    return `${minutes} min read`;
-  };
-
-  // Strip HTML from content
-  const stripHtml = (content) => {
-    if (!content) return "";
-    return content.replace(/<[^>]*>/g, "");
-  };
 
   // Handle newsletter subscription
   const handleSubscribe = (e) => {
@@ -104,7 +108,7 @@ export default function Blog() {
         <div className="blog-error-icon">⚠️</div>
         <h2>Something went wrong</h2>
         <p>{error}</p>
-        <button onClick={loadData} className="blog-error-btn">Try Again</button>
+        <button onClick={loadPosts} className="blog-error-btn">Try Again</button>
       </div>
     );
   }
@@ -187,9 +191,7 @@ export default function Blog() {
                       </span>
                     </div>
                     <h2 className="blog-featured-title">{featuredPost.title}</h2>
-                    <p className="blog-featured-excerpt">
-                      {stripHtml(featuredPost.content)?.substring(0, 200)}...
-                    </p>
+                    <p className="blog-featured-excerpt">{featuredPost.excerpt || ""}</p>
                     <div className="blog-featured-footer">
                       <div className="blog-featured-author">
                         <div className="blog-featured-avatar">
@@ -199,9 +201,7 @@ export default function Blog() {
                           <span className="blog-featured-author-name">
                             {featuredPost.author?.name || "AE Hobs"}
                           </span>
-                          <span className="blog-featured-readtime">
-                            {getReadTime(featuredPost.content)}
-                          </span>
+                          <span className="blog-featured-readtime">{featuredPost.readTime || "1 min read"}</span>
                         </div>
                       </div>
                       <span className="blog-featured-arrow">→</span>
@@ -213,8 +213,8 @@ export default function Blog() {
 
             {/* Posts Grid */}
             <section className="blog-posts-grid">
-              {paginatedPosts.length > 0 ? (
-                paginatedPosts.map(post => (
+              {regularPosts.length > 0 ? (
+                regularPosts.map(post => (
                   <article key={post._id} className="blog-post-card">
                     <Link to={`/posts/${post.slug}`}>
                       <div className="blog-post-image">
@@ -239,16 +239,12 @@ export default function Blog() {
                           </span>
                         </div>
                         <h3 className="blog-post-title">{post.title}</h3>
-                        <p className="blog-post-excerpt">
-                          {stripHtml(post.content)?.substring(0, 100)}...
-                        </p>
+                        <p className="blog-post-excerpt">{post.excerpt || ""}</p>
                         <div className="blog-post-footer">
                           <span className="blog-post-author">
                             {post.author?.name || "AE Hobs"}
                           </span>
-                          <span className="blog-post-readtime">
-                            {getReadTime(post.content)}
-                          </span>
+                          <span className="blog-post-readtime">{post.readTime || "1 min read"}</span>
                         </div>
                       </div>
                     </Link>
@@ -320,7 +316,7 @@ export default function Blog() {
                       <span className="popular-meta">
                         <span className="popular-category">{post.category?.name || "General"}</span>
                         <span className="popular-dot">•</span>
-                        <span>{getReadTime(post.content)}</span>
+                        <span>{post.readTime || "1 min read"}</span>
                       </span>
                     </div>
                   </Link>
@@ -345,7 +341,7 @@ export default function Blog() {
                   >
                     <span className="category-name">{cat.name || cat}</span>
                     <span className="category-count">
-                      {posts.filter(p => p.category?.slug === (cat.slug || cat._id) || p.category?._id === (cat._id || cat)).length}
+                      {cat.postCount ?? "-"}
                     </span>
                   </Link>
                 ))}

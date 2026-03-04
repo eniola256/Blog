@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { fetchPublicPostBySlug, fetchPublicPosts } from "../api/post.js";
 import { fetchComments, createComment, deleteComment } from "../api/comment.js";
+import { trackAnalyticsEvent } from "../api/analytics.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import "./PostDetails.css";
 
@@ -18,6 +19,9 @@ export default function PostDetails() {
   const [activeHeadingId, setActiveHeadingId] = useState("");
   const tocListRef = useRef(null);
   const [tocIndicator, setTocIndicator] = useState({ top: 0, height: 0, visible: false });
+  const readMilestonesRef = useRef(new Set());
+  const readCompleteSentRef = useRef(false);
+  const postViewStartedAtRef = useRef(null);
 
   useEffect(() => {
     loadPost();
@@ -29,19 +33,7 @@ export default function PostDetails() {
       setLoading(true);
       const data = await fetchPublicPostBySlug(slug);
       setPost(data.post);
-      
-      // Load related posts (by category)
-      if (data.post?.category?._id || data.post?.category) {
-        try {
-          const categoryId = data.post.category._id || data.post.category;
-          const relatedData = await fetchPublicPosts(`?category=${categoryId}&limit=4&exclude=${data.post._id}`);
-          const posts = relatedData.posts || relatedData.data || [];
-          setRelatedPosts(posts.slice(0, 3));
-        } catch (relatedErr) {
-          console.log("Could not load related posts:", relatedErr);
-          setRelatedPosts([]);
-        }
-      }
+      await loadRelatedPosts(data.post);
       
       // Load comments if post exists
       if (data.post?._id) {
@@ -105,9 +97,72 @@ export default function PostDetails() {
 
   const getReadTime = (content) => {
     if (!content) return "1 min read";
-    const words = content.split(/\s+/).length;
-    const minutes = Math.ceil(words / 200);
+    const text = content
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    const words = text ? text.split(" ").length : 0;
+    const minutes = Math.max(1, Math.ceil(words / 200));
     return `${minutes} min read`;
+  };
+
+  const loadRelatedPosts = async (currentPost) => {
+    if (!currentPost?._id) {
+      setRelatedPosts([]);
+      return;
+    }
+
+    const excludeValue = `${currentPost._id},${currentPost.slug || ""}`;
+    const nextRelatedPosts = [];
+    const seenPostIds = new Set();
+    const targetCount = 3;
+
+    const addUniquePosts = (items = []) => {
+      items.forEach((item) => {
+        const itemId = item?._id || item?.id;
+        if (!itemId || seenPostIds.has(itemId) || itemId === currentPost._id) return;
+        seenPostIds.add(itemId);
+        nextRelatedPosts.push(item);
+      });
+    };
+
+    try {
+      const categorySlug = currentPost.category?.slug || null;
+      if (categorySlug) {
+        const categoryRelated = await fetchPublicPosts(
+          `?category=${categorySlug}&limit=6&exclude=${encodeURIComponent(excludeValue)}`
+        );
+        const categoryPosts = categoryRelated.posts || categoryRelated.data || [];
+        addUniquePosts(categoryPosts);
+      }
+
+      if (nextRelatedPosts.length < targetCount && Array.isArray(currentPost.tags) && currentPost.tags.length > 0) {
+        for (const tag of currentPost.tags) {
+          if (nextRelatedPosts.length >= targetCount) break;
+          const tagSlug = tag?.slug || null;
+          if (!tagSlug) continue;
+
+          const tagRelated = await fetchPublicPosts(
+            `?tag=${tagSlug}&limit=6&exclude=${encodeURIComponent(excludeValue)}`
+          );
+          const tagPosts = tagRelated.posts || tagRelated.data || [];
+          addUniquePosts(tagPosts);
+        }
+      }
+
+      if (nextRelatedPosts.length < targetCount) {
+        const fallbackRelated = await fetchPublicPosts(
+          `?limit=8&exclude=${encodeURIComponent(excludeValue)}`
+        );
+        const fallbackPosts = fallbackRelated.posts || fallbackRelated.data || [];
+        addUniquePosts(fallbackPosts);
+      }
+
+      setRelatedPosts(nextRelatedPosts.slice(0, targetCount));
+    } catch (relatedErr) {
+      console.log("Could not load related posts:", relatedErr);
+      setRelatedPosts([]);
+    }
   };
 
   // Generate table of contents and inject heading ids into the rendered HTML.
@@ -217,6 +272,70 @@ export default function PostDetails() {
     window.addEventListener("resize", updateIndicator);
     return () => window.removeEventListener("resize", updateIndicator);
   }, [activeHeadingId, showTOC, tableOfContents]);
+
+  useEffect(() => {
+    if (!post?._id && !post?.slug) return;
+
+    const userId = user?._id || user?.id || null;
+    readMilestonesRef.current = new Set();
+    readCompleteSentRef.current = false;
+    postViewStartedAtRef.current = Date.now();
+
+    trackAnalyticsEvent({
+      eventName: "post_view",
+      postId: post?._id || null,
+      slug: post?.slug || null,
+      userId,
+    });
+
+    const maybeTrackReadEvents = () => {
+      const documentElement = document.documentElement;
+      const scrollableHeight = documentElement.scrollHeight - window.innerHeight;
+      if (scrollableHeight <= 0) return;
+
+      const progress = (window.scrollY / scrollableHeight) * 100;
+      const milestones = [
+        { value: 25, eventName: "read_25" },
+        { value: 50, eventName: "read_50" },
+        { value: 75, eventName: "read_75" },
+        { value: 100, eventName: "read_100" },
+      ];
+
+      milestones.forEach((milestone) => {
+        if (progress >= milestone.value && !readMilestonesRef.current.has(milestone.value)) {
+          readMilestonesRef.current.add(milestone.value);
+          trackAnalyticsEvent({
+            eventName: milestone.eventName,
+            postId: post?._id || null,
+            slug: post?.slug || null,
+            userId,
+          });
+        }
+      });
+
+      const dwellTimeMs = Date.now() - (postViewStartedAtRef.current || Date.now());
+      if (progress >= 90 && dwellTimeMs >= 30_000 && !readCompleteSentRef.current) {
+        readCompleteSentRef.current = true;
+        trackAnalyticsEvent({
+          eventName: "read_complete",
+          postId: post?._id || null,
+          slug: post?.slug || null,
+          userId,
+        });
+      }
+    };
+
+    maybeTrackReadEvents();
+    const intervalId = window.setInterval(maybeTrackReadEvents, 5000);
+    window.addEventListener("scroll", maybeTrackReadEvents, { passive: true });
+    window.addEventListener("resize", maybeTrackReadEvents);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("scroll", maybeTrackReadEvents);
+      window.removeEventListener("resize", maybeTrackReadEvents);
+    };
+  }, [post?._id, post?.slug, user?._id, user?.id]);
 
   const handleTOCClick = (event, id) => {
     event.preventDefault();
@@ -377,7 +496,7 @@ export default function PostDetails() {
               <h3>Related Articles</h3>
               <div className="related-posts-grid">
                 {relatedPosts.map(relatedPost => (
-                  <Link key={relatedPost._id} to={`/post/${relatedPost.slug}`} className="related-post-card">
+                  <Link key={relatedPost._id} to={`/posts/${relatedPost.slug}`} className="related-post-card">
                     {relatedPost.featuredImage && (
                       <img src={relatedPost.featuredImage} alt={relatedPost.title} className="related-post-image" />
                     )}

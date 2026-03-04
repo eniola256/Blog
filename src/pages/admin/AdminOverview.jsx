@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Icon from "../../components/Icon";
 import { fetchAdminStats, fetchAdminPosts } from "../../api/post";
 import { fetchAdminCategories } from "../../api/category";
+import { fetchAdminAnalyticsOverview } from "../../api/analytics";
 import "../../pages/AdminDashboard.css";
 
 export default function AdminOverview() {
@@ -11,6 +12,22 @@ export default function AdminOverview() {
     publishedPosts: 0,
     draftPosts: 0,
     categoriesCount: 0,
+  });
+  const [analytics, setAnalytics] = useState({
+    rangeDays: 30,
+    totals: {
+      uniqueVisitors: 0,
+      postViews: 0,
+      readCompletes: 0,
+      completionRate: 0,
+    },
+    readDepth: {
+      read_25: 0,
+      read_50: 0,
+      read_75: 0,
+      read_100: 0,
+    },
+    topPosts: [],
   });
   const [recentPosts, setRecentPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,13 +49,26 @@ export default function AdminOverview() {
         const publishedPosts = statsData.publishedPosts ?? statsData.published ?? 0;
         const draftPosts = statsData.draftPosts ?? statsData.drafts ?? 0;
         const categoriesCount = statsData.categoriesCount ?? statsData.categories ?? 0;
-        
+        const statsAnalytics = statsData.analytics || {};
+
         setStats({
           totalPosts,
           publishedPosts,
           draftPosts,
           categoriesCount,
         });
+
+        setAnalytics((prev) => ({
+          ...prev,
+          rangeDays: statsAnalytics.rangeDays ?? prev.rangeDays,
+          totals: {
+            ...prev.totals,
+            uniqueVisitors: statsAnalytics.uniqueVisitors ?? prev.totals.uniqueVisitors,
+            postViews: statsAnalytics.postViews ?? prev.totals.postViews,
+            readCompletes: statsAnalytics.readCompletes ?? prev.totals.readCompletes,
+            completionRate: statsAnalytics.completionRate ?? prev.totals.completionRate,
+          },
+        }));
       } catch (err) {
         // If stats endpoint doesn't exist, calculate from data
         const [postsData, categories] = await Promise.all([
@@ -59,6 +89,28 @@ export default function AdminOverview() {
           draftPosts,
           categoriesCount: categoriesArray.length,
         });
+      }
+
+      try {
+        const analyticsOverview = await fetchAdminAnalyticsOverview(30);
+        setAnalytics({
+          rangeDays: analyticsOverview.rangeDays ?? 30,
+          totals: {
+            uniqueVisitors: analyticsOverview.totals?.uniqueVisitors ?? 0,
+            postViews: analyticsOverview.totals?.postViews ?? 0,
+            readCompletes: analyticsOverview.totals?.readCompletes ?? 0,
+            completionRate: analyticsOverview.totals?.completionRate ?? 0,
+          },
+          readDepth: {
+            read_25: analyticsOverview.readDepth?.read_25 ?? 0,
+            read_50: analyticsOverview.readDepth?.read_50 ?? 0,
+            read_75: analyticsOverview.readDepth?.read_75 ?? 0,
+            read_100: analyticsOverview.readDepth?.read_100 ?? 0,
+          },
+          topPosts: analyticsOverview.topPosts || [],
+        });
+      } catch {
+        // Keep fallback analytics from /stats
       }
 
       // Fetch recent posts
@@ -91,6 +143,17 @@ export default function AdminOverview() {
       day: "numeric"
     });
   };
+
+  const formatPercent = (value) => `${Number(value || 0).toFixed(2)}%`;
+
+  const readDepthRows = [
+    { key: "read_25", label: "25% read", value: analytics.readDepth.read_25 },
+    { key: "read_50", label: "50% read", value: analytics.readDepth.read_50 },
+    { key: "read_75", label: "75% read", value: analytics.readDepth.read_75 },
+    { key: "read_100", label: "100% read", value: analytics.readDepth.read_100 },
+  ];
+
+  const maxDepth = Math.max(...readDepthRows.map((item) => item.value), 1);
 
   if (loading) {
     return (
@@ -149,6 +212,92 @@ export default function AdminOverview() {
           <div className="admin-stat-content">
             <div className="admin-stat-label">Categories</div>
             <div className="admin-stat-value">{stats.categoriesCount}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="admin-card">
+        <div className="admin-card-header">
+          <h3 className="admin-card-title">Reader Analytics ({analytics.rangeDays} days)</h3>
+        </div>
+        <div className="admin-card-body">
+          <div className="admin-analytics-grid">
+            <div className="admin-stat-card">
+              <div className="admin-stat-icon blue">
+                <Icon name="group" size={24} />
+              </div>
+              <div className="admin-stat-content">
+                <div className="admin-stat-label">Unique Visitors</div>
+                <div className="admin-stat-value">{analytics.totals.uniqueVisitors}</div>
+              </div>
+            </div>
+
+            <div className="admin-stat-card">
+              <div className="admin-stat-icon green">
+                <Icon name="visibility" size={24} />
+              </div>
+              <div className="admin-stat-content">
+                <div className="admin-stat-label">Post Views</div>
+                <div className="admin-stat-value">{analytics.totals.postViews}</div>
+              </div>
+            </div>
+
+            <div className="admin-stat-card">
+              <div className="admin-stat-icon yellow">
+                <Icon name="task_alt" size={24} />
+              </div>
+              <div className="admin-stat-content">
+                <div className="admin-stat-label">Read Completes</div>
+                <div className="admin-stat-value">{analytics.totals.readCompletes}</div>
+              </div>
+            </div>
+
+            <div className="admin-stat-card">
+              <div className="admin-stat-icon purple">
+                <Icon name="insights" size={24} />
+              </div>
+              <div className="admin-stat-content">
+                <div className="admin-stat-label">Completion Rate</div>
+                <div className="admin-stat-value">{formatPercent(analytics.totals.completionRate)}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="admin-analytics-panels">
+            <div className="admin-analytics-panel">
+              <h4 className="admin-analytics-title">Read Depth</h4>
+              <div className="admin-depth-list">
+                {readDepthRows.map((item) => (
+                  <div key={item.key} className="admin-depth-row">
+                    <span className="admin-depth-label">{item.label}</span>
+                    <div className="admin-depth-track">
+                      <span
+                        className="admin-depth-fill"
+                        style={{ width: `${(item.value / maxDepth) * 100}%` }}
+                      ></span>
+                    </div>
+                    <span className="admin-depth-value">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="admin-analytics-panel">
+              <h4 className="admin-analytics-title">Top Posts by Views</h4>
+              {analytics.topPosts.length > 0 ? (
+                <div className="admin-top-posts-list">
+                  {analytics.topPosts.map((item, index) => (
+                    <div key={`${item.slug || item.postId || "unknown"}-${index}`} className="admin-top-post-item">
+                      <span className="admin-top-post-rank">#{index + 1}</span>
+                      <span className="admin-top-post-slug">{item.slug || "Unknown slug"}</span>
+                      <span className="admin-top-post-views">{item.views} views</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="admin-empty-text">No tracked post views yet.</p>
+              )}
+            </div>
           </div>
         </div>
       </div>

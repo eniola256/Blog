@@ -11,19 +11,19 @@ export default function Posts() {
   // Pagination
   const POSTS_PER_PAGE = 9;
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    fetchPublicPosts("?status=published")
+    setLoading(true);
+    setError(null);
+    fetchPublicPosts(`?page=${currentPage}&limit=${POSTS_PER_PAGE}`)
       .then(data => {
         setPosts(data.posts || []);
+        setTotalPages(data.totalPages || 1);
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
-  }, []);
-
-  const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
-  const startIndex = (currentPage - 1) * POSTS_PER_PAGE;
-  const paginatedPosts = posts.slice(startIndex, startIndex + POSTS_PER_PAGE);
+  }, [currentPage]);
 
   if (loading) return <p style={{ textAlign: "center", padding: "40px" }}>Loading posts…</p>;
   if (error) return <p style={{ textAlign: "center", padding: "40px", color: "red" }}>{error}</p>;
@@ -39,7 +39,7 @@ export default function Posts() {
         All Posts
       </h1>
 
-      {paginatedPosts.length > 0 ? (
+      {posts.length > 0 ? (
         <>
           <div style={{ 
             display: "grid", 
@@ -47,7 +47,7 @@ export default function Posts() {
             gap: "24px",
             marginBottom: "40px"
           }}>
-            {paginatedPosts.map(post => (
+            {posts.map(post => (
               <Link 
                 to={`/posts/${post.slug}`} 
                 key={post._id} 
@@ -126,7 +126,7 @@ export default function Posts() {
                       lineHeight: 1.6,
                       flex: 1
                     }}>
-                      {post.content?.substring(0, 120)}...
+                      {post.excerpt || ""}
                     </p>
                     <div style={{ 
                       display: "flex", 
