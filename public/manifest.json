@@ -1,0 +1,16 @@
+{
+  "name": "AE Tech/Gaming Blog",
+  "short_name": "AE Blog",
+  "description": "Practical insights on technology, gaming, AI, and software development.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ]
+}
