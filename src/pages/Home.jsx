@@ -133,9 +133,16 @@ export default function Home() {
               <div className="fs-content">
                 <div className="img">
                   {featuredPost.featuredImage ? (
-                    <img src={featuredPost.featuredImage} alt={featuredPost.title} />
+                    <img
+                      src={featuredPost.featuredImage}
+                      alt={featuredPost.title}
+                      fetchPriority="high"
+                      decoding="async"
+                      width="1200"
+                      height="720"
+                    />
                   ) : (
-                    <img src="fs.jpg" alt="Featured" />
+                    <img src="fs.jpg" alt="Featured" fetchPriority="high" decoding="async" width="1200" height="720" />
                   )}
                   {featuredPost.category?.name && (
                     <span className="featured-category">{featuredPost.category.name}</span>
@@ -185,9 +192,16 @@ export default function Home() {
                 <Link to={`/posts/${post.slug}`} key={post._id} className="latest-card">
                   <div className="ph-image">
                     {post.featuredImage ? (
-                      <img src={post.featuredImage} alt={post.title} />
+                      <img
+                        src={post.featuredImage}
+                        alt={post.title}
+                        loading="lazy"
+                        decoding="async"
+                        width="640"
+                        height="360"
+                      />
                     ) : (
-                      <img src="Lt.jpg" alt="" />
+                      <img src="Lt.jpg" alt="" loading="lazy" decoding="async" width="640" height="360" />
                     )}
                   </div>
                   <div className="cat-date">

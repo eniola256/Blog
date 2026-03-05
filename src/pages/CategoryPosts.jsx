@@ -113,6 +113,10 @@ export default function CategoryPosts() {
               <img 
                 src={post.featuredImage || post.image || "/Lt.jpg"} 
                 alt={post.title} 
+                loading="lazy"
+                decoding="async"
+                width="640"
+                height="360"
               />
             </div>
 

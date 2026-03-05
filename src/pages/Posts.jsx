@@ -71,6 +71,10 @@ export default function Posts() {
                       <img 
                         src={post.featuredImage} 
                         alt={post.title}
+                        loading="lazy"
+                        decoding="async"
+                        width="640"
+                        height="360"
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
                     ) : (

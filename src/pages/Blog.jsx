@@ -169,7 +169,14 @@ export default function Blog() {
                 <Link to={`/posts/${featuredPost.slug}`}>
                   <div className="blog-featured-image">
                     {featuredPost.featuredImage ? (
-                      <img src={featuredPost.featuredImage} alt={featuredPost.title} />
+                      <img
+                        src={featuredPost.featuredImage}
+                        alt={featuredPost.title}
+                        fetchPriority="high"
+                        decoding="async"
+                        width="1200"
+                        height="720"
+                      />
                     ) : (
                       <div className="blog-featured-placeholder">
                         <span>AE</span>
@@ -219,7 +226,14 @@ export default function Blog() {
                     <Link to={`/posts/${post.slug}`}>
                       <div className="blog-post-image">
                         {post.featuredImage ? (
-                          <img src={post.featuredImage} alt={post.title} />
+                          <img
+                            src={post.featuredImage}
+                            alt={post.title}
+                            loading="lazy"
+                            decoding="async"
+                            width="640"
+                            height="360"
+                          />
                         ) : (
                           <div className="blog-post-placeholder">
                             <span>AE</span>
