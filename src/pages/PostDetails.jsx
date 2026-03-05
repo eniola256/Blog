@@ -6,6 +6,14 @@ import { trackAnalyticsEvent } from "../api/analytics.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import "./PostDetails.css";
 
+const stripHtml = (value = "") => value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+const toDescription = (value = "", maxLength = 160) => {
+  const text = stripHtml(value);
+  if (!text) return "Read this post on AE Tech/Gaming Blog.";
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength).trim()}...`;
+};
+
 export default function PostDetails() {
   const { slug } = useParams();
   const { user, isAuthenticated } = useAuth();
@@ -272,6 +280,77 @@ export default function PostDetails() {
     window.addEventListener("resize", updateIndicator);
     return () => window.removeEventListener("resize", updateIndicator);
   }, [activeHeadingId, showTOC, tableOfContents]);
+
+  useEffect(() => {
+    if (!post?.slug) return;
+
+    const siteName = "AE Tech/Gaming Blog";
+    const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
+    const pageUrl = `${siteUrl.replace(/\/$/, "")}/posts/${post.slug}`;
+    const description = toDescription(post.content);
+    const imageUrl = post.featuredImage || `${siteUrl.replace(/\/$/, "")}/vite.svg`;
+    const title = `${post.title} | ${siteName}`;
+
+    const setMetaTag = (selector, attrs) => {
+      let meta = document.head.querySelector(selector);
+      if (!meta) {
+        meta = document.createElement("meta");
+        Object.entries(attrs).forEach(([key, value]) => {
+          if (key !== "content") meta.setAttribute(key, value);
+        });
+        document.head.appendChild(meta);
+      }
+      meta.setAttribute("content", attrs.content);
+    };
+
+    document.title = title;
+    setMetaTag('meta[name="description"]', { name: "description", content: description });
+    setMetaTag('meta[property="og:type"]', { property: "og:type", content: "article" });
+    setMetaTag('meta[property="og:title"]', { property: "og:title", content: title });
+    setMetaTag('meta[property="og:description"]', { property: "og:description", content: description });
+    setMetaTag('meta[property="og:url"]', { property: "og:url", content: pageUrl });
+    setMetaTag('meta[property="og:image"]', { property: "og:image", content: imageUrl });
+    setMetaTag('meta[name="twitter:card"]', { name: "twitter:card", content: "summary_large_image" });
+    setMetaTag('meta[name="twitter:title"]', { name: "twitter:title", content: title });
+    setMetaTag('meta[name="twitter:description"]', { name: "twitter:description", content: description });
+    setMetaTag('meta[name="twitter:image"]', { name: "twitter:image", content: imageUrl });
+
+    let canonical = document.head.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel", "canonical");
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute("href", pageUrl);
+
+    const articleSchema = {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: post.title,
+      description,
+      image: imageUrl,
+      datePublished: post.createdAt,
+      dateModified: post.updatedAt || post.createdAt,
+      author: {
+        "@type": "Person",
+        name: post.author?.name || "AE Tech Blog",
+      },
+      mainEntityOfPage: pageUrl,
+      publisher: {
+        "@type": "Organization",
+        name: siteName,
+      },
+    };
+
+    let ldScript = document.head.querySelector('script[data-seo="article-jsonld"]');
+    if (!ldScript) {
+      ldScript = document.createElement("script");
+      ldScript.setAttribute("type", "application/ld+json");
+      ldScript.setAttribute("data-seo", "article-jsonld");
+      document.head.appendChild(ldScript);
+    }
+    ldScript.textContent = JSON.stringify(articleSchema);
+  }, [post]);
 
   useEffect(() => {
     if (!post?._id && !post?.slug) return;
