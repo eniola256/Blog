@@ -78,6 +78,8 @@ export async function createPost(postData, featuredImage = null) {
     formData.append("content", postData.content);
     formData.append("category", postData.category);
     formData.append("status", postData.status);
+    formData.append("metaDescription", postData.metaDescription || "");
+    formData.append("focusKeyword", postData.focusKeyword || "");
     
     // Append tags (can be array or single value)
     if (postData.tags) {
@@ -124,6 +126,8 @@ export async function updatePost(id, postData, featuredImage = null) {
     formData.append("content", postData.content);
     formData.append("category", postData.category);
     formData.append("status", postData.status);
+    formData.append("metaDescription", postData.metaDescription || "");
+    formData.append("focusKeyword", postData.focusKeyword || "");
     
     // Append tags
     if (postData.tags) {

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Icon from "../../components/Icon";
 import RichTextEditor from "../../components/RichTextEditor";
+import SeoCheckerCard from "../../components/SeoCheckerCard";
 import { fetchAdminCategories } from "../../api/category";
 import { fetchAdminTags as fetchTagsList } from "../../api/tag";
 import { createPost, updatePost, fetchAdminPostById } from "../../api/post";
@@ -21,6 +22,8 @@ export default function AuthorCreatePost() {
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState("");
   const [status, setStatus] = useState("draft");
+  const [metaDescription, setMetaDescription] = useState("");
+  const [focusKeyword, setFocusKeyword] = useState("");
   const [featuredImage, setFeaturedImage] = useState(null);
   const [featuredImageFile, setFeaturedImageFile] = useState(null);
 
@@ -67,6 +70,8 @@ export default function AuthorCreatePost() {
         setCategory(post.category?._id || post.category || "");
         setTags(post.tags?.map(t => t._id || t) || []);
         setStatus(post.status || "draft");
+        setMetaDescription(post.metaDescription || "");
+        setFocusKeyword(post.focusKeyword || "");
         setFeaturedImage(post.featuredImage || null);
       }
     } catch (err) {
@@ -131,13 +136,16 @@ export default function AuthorCreatePost() {
     setSaving(true);
 
     try {
+      const generatedSlug = generateSlug(title);
       const postData = {
         title,
-        slug: generateSlug(title),
+        slug: generatedSlug,
         content,
         category,
         tags,
         status,
+        metaDescription: metaDescription.trim(),
+        focusKeyword: focusKeyword.trim(),
       };
 
       const imageFile = featuredImageFile instanceof File ? featuredImageFile : null;
@@ -171,6 +179,8 @@ export default function AuthorCreatePost() {
       form.dispatchEvent(new Event("submit", { bubbles: true }));
     }
   };
+
+  const slug = generateSlug(title);
 
   const getCategoryName = (catId) => {
     const cat = categories.find(c => (c._id || c) === catId);
@@ -222,7 +232,7 @@ export default function AuthorCreatePost() {
                     type="text"
                     className="author-form-input"
                     placeholder="post-url-slug"
-                    value={generateSlug(title)}
+                    value={slug}
                     readOnly
                     style={{ backgroundColor: "var(--background)", opacity: 0.7 }}
                   />
@@ -291,6 +301,17 @@ export default function AuthorCreatePost() {
                 </div>
               </div>
             </div>
+
+            <SeoCheckerCard
+              variant="author"
+              title={title}
+              slug={slug}
+              content={content}
+              metaDescription={metaDescription}
+              setMetaDescription={setMetaDescription}
+              focusKeyword={focusKeyword}
+              setFocusKeyword={setFocusKeyword}
+            />
 
             {/* Featured Image Card */}
             <div className="author-card">
