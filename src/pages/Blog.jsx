@@ -93,11 +93,41 @@ export default function Blog() {
     }
   };
 
+  const SkeletonLoader = () => (
+    <>
+      <div className="blog-skeleton-header">
+        <div className="blog-skeleton blog-skeleton-title"></div>
+        <div className="blog-skeleton blog-skeleton-text"></div>
+      </div>
+
+      <div className="blog-skeleton-featured">
+        <div className="blog-skeleton blog-skeleton-featured-img"></div>
+        <div className="blog-skeleton blog-skeleton-featured-text"></div>
+        <div className="blog-skeleton blog-skeleton-featured-excerpt"></div>
+      </div>
+
+      <section className="blog-skeleton-section">
+        <div className="blog-skeleton-grid">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="blog-skeleton-card">
+              <div className="blog-skeleton blog-skeleton-card-image"></div>
+              <div className="blog-skeleton blog-skeleton-card-category"></div>
+              <div className="blog-skeleton blog-skeleton-card-title"></div>
+              <div className="blog-skeleton blog-skeleton-card-text"></div>
+              <div className="blog-skeleton blog-skeleton-card-footer"></div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+
   if (loading) {
     return (
-      <div className="blog-loading">
-        <div className="blog-spinner"></div>
-        <p>Loading posts...</p>
+      <div className="blog-page">
+        <div className="blog-container">
+          <SkeletonLoader />
+        </div>
       </div>
     );
   }

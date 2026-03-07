@@ -450,7 +450,7 @@ section {
     
     gap: 14px;
     width: 90%;
-    padding: var(--space-16) var(--space-12) var(--space-8) ;
+    padding: var(--space-16) var(--space-8) var(--space-8) ;
     
   }
 
@@ -463,7 +463,7 @@ section {
   }
 
   .featured-story{
-    padding: var(--space-6) var(--space-12) ;
+    padding: var(--space-6) var(--space-8) ;
   }
 
   .fs .img {
@@ -475,7 +475,7 @@ section {
   }
 
   .latest-news{
-    padding: var(--space-10) var(--space-16) ;
+    padding: var(--space-10) var(--space-8) ;
     width: 100%;
     background: var(--surface);
   }
@@ -506,7 +506,7 @@ section {
     padding: 0;
   }
   .footer-content{
-    padding: var(--space-6) var(--space-12) ;
+    padding: var(--space-6) var(--space-8) ;
   }
 }
 
