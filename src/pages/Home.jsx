@@ -23,7 +23,7 @@ export default function Home() {
   useEffect(() => {
     const loadFeatured = async () => {
       try {
-        const featuredData = await fetchPublicPosts("?page=1&limit=1");
+        const featuredData = await fetchPublicPosts("?page=1&limit=1&sort=createdAt:asc");
         const featured = (featuredData.posts || [])[0] || null;
         setFeaturedPost(featured);
       } catch (err) {
@@ -151,7 +151,7 @@ export default function Home() {
                 <div className="featured-post-txt">
                   <h3>{featuredPost.title}</h3>
                   <p className="post-content">
-                    {featuredPost.excerpt || ""}
+                    {featuredPost.metaDescription || featuredPost.excerpt || ""}
                   </p>
                   <p className="featured-date-time"> 
                     {featuredPost.author?.name || 'AE Hobs'} 
