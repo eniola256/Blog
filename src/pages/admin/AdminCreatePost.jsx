@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Icon from "../../components/Icon";
 import RichTextEditor from "../../components/RichTextEditor";
@@ -32,7 +32,11 @@ export default function AdminCreatePost() {
   // UI state
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [autoSaving, setAutoSaving] = useState(false);
   const [error, setError] = useState("");
+  const [draftId, setDraftId] = useState(null);
+  const [lastDraftSavedAt, setLastDraftSavedAt] = useState(null);
+  const lastSavedFingerprintRef = useRef("");
 
   // Load data on mount
   useEffect(() => {
@@ -48,14 +52,28 @@ export default function AdminCreatePost() {
         // If editing, load the post
         if (isEditing) {
           const post = await fetchAdminPostById(id);
+          const normalizedCategory = post.category?._id || post.category || "";
+          const normalizedTags = post.tags?.map(t => t._id || t) || [];
+
+          setDraftId(post._id || id);
           setTitle(post.title);
           setContent(post.content);
-          setCategory(post.category?._id || post.category || "");
-          setTags(post.tags?.map(t => t._id || t) || []);
+          setCategory(normalizedCategory);
+          setTags(normalizedTags);
           setStatus(post.status || "draft");
           setMetaDescription(post.metaDescription || "");
           setFocusKeyword(post.focusKeyword || "");
           setFeaturedImage(post.featuredImage || null);
+
+          lastSavedFingerprintRef.current = buildDraftFingerprint({
+            draftTitle: post.title || "",
+            draftContent: post.content || "",
+            draftCategory: normalizedCategory,
+            draftTags: normalizedTags,
+            draftMetaDescription: post.metaDescription || "",
+            draftFocusKeyword: post.focusKeyword || "",
+            draftFeaturedImage: post.featuredImage || null,
+          });
         }
       } catch (err) {
         setError(err.message);
@@ -73,6 +91,27 @@ export default function AdminCreatePost() {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
   };
+
+  const stripHtml = (html = "") => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+
+  const buildDraftFingerprint = ({
+    draftTitle = title,
+    draftContent = content,
+    draftCategory = category,
+    draftTags = tags,
+    draftMetaDescription = metaDescription,
+    draftFocusKeyword = focusKeyword,
+    draftFeaturedImage = featuredImageFile || featuredImage,
+  } = {}) =>
+    JSON.stringify({
+      title: (draftTitle || "").trim(),
+      content: stripHtml(draftContent || ""),
+      category: draftCategory || "",
+      tags: (draftTags || []).map((tag) => String(tag)).sort(),
+      metaDescription: (draftMetaDescription || "").trim(),
+      focusKeyword: (draftFocusKeyword || "").trim(),
+      hasFeaturedImage: Boolean(draftFeaturedImage),
+    });
 
   const handleAddTag = (e) => {
     if (e.key === "Enter" && tagInput.trim()) {
@@ -119,60 +158,129 @@ export default function AdminCreatePost() {
     setFeaturedImageFile(null);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setSaving(true);
+  const savePost = async ({ targetStatus, redirect = false, silent = false, auto = false } = {}) => {
+    if (saving || autoSaving) return;
+
+    const nextStatus = targetStatus || status;
+    const plainContent = stripHtml(content);
+
+    if (nextStatus === "published") {
+      if (!title.trim()) {
+        setError("Title is required to publish.");
+        return;
+      }
+      if (!plainContent) {
+        setError("Content is required to publish.");
+        return;
+      }
+      if (!category) {
+        setError("Category is required to publish.");
+        return;
+      }
+    }
+
+    if (!silent) {
+      setError("");
+    }
+
+    if (auto) {
+      setAutoSaving(true);
+    } else {
+      setSaving(true);
+    }
 
     try {
-      const generatedSlug = generateSlug(title);
+      const hasTitle = Boolean(title.trim());
+      const safeTitle = hasTitle ? title.trim() : "Untitled Draft";
+      const generatedSlug = hasTitle ? generateSlug(safeTitle) : `untitled-draft-${Date.now()}`;
       const postData = {
-        title,
+        title: safeTitle,
         slug: generatedSlug,
         content,
         category,
         tags,
-        status,
+        status: nextStatus,
         metaDescription: metaDescription.trim(),
         focusKeyword: focusKeyword.trim(),
       };
 
-      // Pass the actual file if it's a new upload
       const imageFile = featuredImageFile instanceof File ? featuredImageFile : null;
+      const postId = id || draftId;
 
-      if (isEditing) {
-        await updatePost(id, postData, imageFile);
+      let response;
+      if (postId) {
+        response = await updatePost(postId, postData, imageFile);
       } else {
-        await createPost(postData, imageFile);
+        response = await createPost(postData, imageFile);
       }
 
-      // Redirect to posts list
-      navigate("/admin/posts");
+      const createdId = response?._id || response?.post?._id || response?.data?._id || response?.id;
+      if (!postId && createdId) {
+        setDraftId(createdId);
+      }
+
+      setStatus(nextStatus);
+
+      if (nextStatus === "draft") {
+        lastSavedFingerprintRef.current = buildDraftFingerprint();
+        setLastDraftSavedAt(Date.now());
+      }
+
+      if (redirect) {
+        navigate("/admin/posts");
+      }
     } catch (err) {
-      setError(err.message);
+      if (!silent) {
+        setError(err.message);
+      }
     } finally {
-      setSaving(false);
+      if (auto) {
+        setAutoSaving(false);
+      } else {
+        setSaving(false);
+      }
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await savePost({ targetStatus: status, redirect: status === "published" });
   };
 
   const handleSaveDraft = async () => {
-    setStatus("draft");
-    // Trigger form submit
-    const form = document.querySelector(".admin-create-post form");
-    if (form) {
-      form.dispatchEvent(new Event("submit", { bubbles: true }));
-    }
+    await savePost({ targetStatus: "draft", redirect: false });
   };
 
   const handlePublish = async () => {
-    setStatus("published");
-    const form = document.querySelector(".admin-create-post form");
-    if (form) {
-      form.dispatchEvent(new Event("submit", { bubbles: true }));
-    }
+    await savePost({ targetStatus: "published", redirect: true });
   };
 
   const slug = generateSlug(title);
+
+  useEffect(() => {
+    if (loading) return;
+
+    const hasAnyInput =
+      Boolean(title.trim()) ||
+      Boolean(stripHtml(content)) ||
+      Boolean(category) ||
+      tags.length > 0 ||
+      Boolean(metaDescription.trim()) ||
+      Boolean(focusKeyword.trim()) ||
+      Boolean(featuredImageFile) ||
+      Boolean(featuredImage);
+
+    if (!hasAnyInput) return;
+
+    const currentFingerprint = buildDraftFingerprint();
+    if (currentFingerprint === lastSavedFingerprintRef.current) return;
+
+    const timer = setTimeout(() => {
+      savePost({ targetStatus: "draft", redirect: false, silent: true, auto: true });
+    }, 1800);
+
+    return () => clearTimeout(timer);
+  }, [loading, title, content, category, tags, metaDescription, focusKeyword, featuredImageFile, featuredImage]);
 
   // Get category name for display
   const getCategoryName = (catId) => {
@@ -217,7 +325,6 @@ export default function AdminCreatePost() {
                     placeholder="Enter post title..."
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    required
                   />
                 </div>
                 <div className="admin-form-group">
@@ -277,7 +384,7 @@ export default function AdminCreatePost() {
                     type="button" 
                     className="admin-btn admin-btn-secondary" 
                     onClick={handleSaveDraft}
-                    disabled={saving}
+                    disabled={saving || autoSaving}
                     style={{ flex: 1 }}
                   >
                     {saving ? "Saving..." : "Save Draft"}
@@ -286,13 +393,20 @@ export default function AdminCreatePost() {
                     type="button" 
                     className="admin-btn admin-btn-primary" 
                     onClick={handlePublish}
-                    disabled={saving}
+                    disabled={saving || autoSaving}
                     style={{ flex: 1 }}
                   >
                     <Icon name="publish" size={18} />
                     Publish
                   </button>
                 </div>
+                <p style={{ fontSize: "11px", color: "var(--foreground-muted)", marginTop: "8px" }}>
+                  {autoSaving
+                    ? "Auto-saving draft..."
+                    : lastDraftSavedAt
+                    ? `Draft saved at ${new Date(lastDraftSavedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+                    : "Draft auto-save is on."}
+                </p>
               </div>
             </div>
 
@@ -347,7 +461,6 @@ export default function AdminCreatePost() {
                     className="admin-form-select"
                     value={category}
                     onChange={(e) => setCategory(e.target.value)}
-                    required
                   >
                     <option value="">Select category...</option>
                     {categories.map((cat) => (
