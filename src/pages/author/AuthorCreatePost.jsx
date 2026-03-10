@@ -5,7 +5,7 @@ import RichTextEditor from "../../components/RichTextEditor";
 import SeoCheckerCard from "../../components/SeoCheckerCard";
 import { fetchAdminCategories } from "../../api/category";
 import { fetchAdminTags as fetchTagsList } from "../../api/tag";
-import { createPost, updatePost, fetchAdminPostById } from "../../api/post";
+import { createPost, updatePost, fetchAdminPostById, fetchDraftRevisionForPost } from "../../api/post";
 import { useAuth } from "../../contexts/AuthContext";
 import "./AuthorDashboard.css";
 
@@ -38,7 +38,9 @@ export default function AuthorCreatePost() {
   const [error, setError] = useState("");
   const [draftId, setDraftId] = useState(null);
   const [lastDraftSavedAt, setLastDraftSavedAt] = useState(null);
+  const [isEditingPublished, setIsEditingPublished] = useState(false);
   const lastSavedFingerprintRef = useRef("");
+  const pendingAutoSaveRef = useRef(false);
 
   // Load data on mount
   useEffect(() => {
@@ -61,10 +63,7 @@ export default function AuthorCreatePost() {
       // If editing, load the post
       if (isEditing) {
         const post = await fetchAdminPostById(id);
-        const normalizedCategory = post.category?._id || post.category || "";
-        const normalizedTags = post.tags?.map(t => t._id || t) || [];
-
-        setDraftId(post._id || id);
+        const loadedStatus = post.status || "draft";
         
         // Verify this post belongs to the current author
         if (post.author?._id !== user?._id && post.author !== user?._id) {
@@ -73,23 +72,42 @@ export default function AuthorCreatePost() {
           return;
         }
         
-        setTitle(post.title);
-        setContent(post.content);
+        setStatus(loadedStatus);
+        setIsEditingPublished(loadedStatus === "published");
+
+        let sourcePost = post;
+        if (loadedStatus === "published") {
+          try {
+            const revisionResponse = await fetchDraftRevisionForPost(post._id || id);
+            const revision = revisionResponse?.posts?.[0];
+            if (revision) {
+              sourcePost = revision;
+            }
+          } catch (revisionError) {
+            // Ignore revision fetch errors and fall back to the published post.
+          }
+        }
+
+        const normalizedCategory = sourcePost.category?._id || sourcePost.category || "";
+        const normalizedTags = sourcePost.tags?.map(t => t._id || t) || [];
+
+        setDraftId(sourcePost.status === "draft" ? (sourcePost._id || id) : null);
+        setTitle(sourcePost.title);
+        setContent(sourcePost.content);
         setCategory(normalizedCategory);
         setTags(normalizedTags);
-        setStatus(post.status || "draft");
-        setMetaDescription(post.metaDescription || "");
-        setFocusKeyword(post.focusKeyword || "");
-        setFeaturedImage(post.featuredImage || null);
+        setMetaDescription(sourcePost.metaDescription || "");
+        setFocusKeyword(sourcePost.focusKeyword || "");
+        setFeaturedImage(sourcePost.featuredImage || null);
 
         lastSavedFingerprintRef.current = buildDraftFingerprint({
-          draftTitle: post.title || "",
-          draftContent: post.content || "",
+          draftTitle: sourcePost.title || "",
+          draftContent: sourcePost.content || "",
           draftCategory: normalizedCategory,
           draftTags: normalizedTags,
-          draftMetaDescription: post.metaDescription || "",
-          draftFocusKeyword: post.focusKeyword || "",
-          draftFeaturedImage: post.featuredImage || null,
+          draftMetaDescription: sourcePost.metaDescription || "",
+          draftFocusKeyword: sourcePost.focusKeyword || "",
+          draftFeaturedImage: sourcePost.featuredImage || null,
         });
       }
     } catch (err) {
@@ -108,6 +126,13 @@ export default function AuthorCreatePost() {
   };
 
   const stripHtml = (html = "") => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  const getFeaturedImageKey = (image) => {
+    if (!image) return "";
+    if (image instanceof File) {
+      return `${image.name}:${image.size}:${image.lastModified}`;
+    }
+    return String(image);
+  };
 
   const buildDraftFingerprint = ({
     draftTitle = title,
@@ -120,12 +145,13 @@ export default function AuthorCreatePost() {
   } = {}) =>
     JSON.stringify({
       title: (draftTitle || "").trim(),
-      content: stripHtml(draftContent || ""),
+      content: (draftContent || "").trim(),
+      contentText: stripHtml(draftContent || ""),
       category: draftCategory || "",
       tags: (draftTags || []).map((tag) => String(tag)).sort(),
       metaDescription: (draftMetaDescription || "").trim(),
       focusKeyword: (draftFocusKeyword || "").trim(),
-      hasFeaturedImage: Boolean(draftFeaturedImage),
+      featuredImageKey: getFeaturedImageKey(draftFeaturedImage),
     });
 
   const handleAddTag = (e) => {
@@ -170,9 +196,16 @@ export default function AuthorCreatePost() {
   };
 
   const savePost = async ({ targetStatus, redirect = false, silent = false, auto = false } = {}) => {
-    if (saving || autoSaving) return;
+    if (saving || autoSaving) {
+      if (auto) {
+        pendingAutoSaveRef.current = true;
+      }
+      return;
+    }
 
     const nextStatus = targetStatus || status;
+    const keepPublished =
+      isEditing && isEditingPublished && status === "published" && nextStatus === "draft" && auto;
     const plainContent = stripHtml(content);
 
     if (nextStatus === "published") {
@@ -204,6 +237,7 @@ export default function AuthorCreatePost() {
       const hasTitle = Boolean(title.trim());
       const safeTitle = hasTitle ? title.trim() : "Untitled Draft";
       const generatedSlug = hasTitle ? generateSlug(safeTitle) : `untitled-draft-${Date.now()}`;
+      const imageFile = featuredImageFile instanceof File ? featuredImageFile : null;
       const postData = {
         title: safeTitle,
         slug: generatedSlug,
@@ -211,11 +245,16 @@ export default function AuthorCreatePost() {
         category,
         tags,
         status: nextStatus,
+        targetStatus: nextStatus,
         metaDescription: metaDescription.trim(),
         focusKeyword: focusKeyword.trim(),
+        featuredImage: imageFile ? undefined : (featuredImage ? featuredImage : null),
+        auto,
+        silent,
+        keepPublished,
+        revisionId: keepPublished ? draftId : undefined,
       };
 
-      const imageFile = featuredImageFile instanceof File ? featuredImageFile : null;
       const postId = id || draftId;
 
       let response;
@@ -225,12 +264,16 @@ export default function AuthorCreatePost() {
         response = await createPost(postData, imageFile);
       }
 
-      const createdId = response?._id || response?.post?._id || response?.data?._id || response?.id;
-      if (!postId && createdId) {
+      const responsePost = response?.post || response?.data || response;
+      const createdId = responsePost?._id || response?._id || response?.id;
+      const isRevision = Boolean(response?.isRevision || responsePost?.revisionOf);
+      if (createdId && (!postId || keepPublished || isRevision)) {
         setDraftId(createdId);
       }
 
-      setStatus(nextStatus);
+      if (!keepPublished) {
+        setStatus(nextStatus);
+      }
 
       if (nextStatus === "draft") {
         lastSavedFingerprintRef.current = buildDraftFingerprint();
@@ -249,6 +292,13 @@ export default function AuthorCreatePost() {
         setAutoSaving(false);
       } else {
         setSaving(false);
+      }
+      if (pendingAutoSaveRef.current) {
+        pendingAutoSaveRef.current = false;
+        const currentFingerprint = buildDraftFingerprint();
+        if (currentFingerprint !== lastSavedFingerprintRef.current) {
+          savePost({ targetStatus: "draft", redirect: false, silent: true, auto: true });
+        }
       }
     }
   };

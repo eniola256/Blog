@@ -69,6 +69,16 @@ export async function fetchAdminPostById(id) {
   return res.json();
 }
 
+export async function fetchDraftRevisionForPost(postId) {
+  const res = await fetch(`${API}/api/admin/posts?revisionOf=${postId}&status=draft&limit=1&page=1`, {
+    headers: getHeaders(),
+  });
+  if (!res.ok) {
+    throw new Error("Failed to fetch draft revision");
+  }
+  return res.json();
+}
+
 export async function createPost(postData, featuredImage = null) {
   // If there's a featured image, use FormData
   if (featuredImage instanceof File) {
@@ -78,6 +88,21 @@ export async function createPost(postData, featuredImage = null) {
     formData.append("content", postData.content);
     formData.append("category", postData.category);
     formData.append("status", postData.status);
+    if (postData.targetStatus) {
+      formData.append("targetStatus", postData.targetStatus);
+    }
+    if (postData.auto !== undefined) {
+      formData.append("auto", String(postData.auto));
+    }
+    if (postData.silent !== undefined) {
+      formData.append("silent", String(postData.silent));
+    }
+    if (postData.keepPublished !== undefined) {
+      formData.append("keepPublished", String(postData.keepPublished));
+    }
+    if (postData.revisionId) {
+      formData.append("revisionId", postData.revisionId);
+    }
     formData.append("metaDescription", postData.metaDescription || "");
     formData.append("focusKeyword", postData.focusKeyword || "");
     
@@ -126,6 +151,21 @@ export async function updatePost(id, postData, featuredImage = null) {
     formData.append("content", postData.content);
     formData.append("category", postData.category);
     formData.append("status", postData.status);
+    if (postData.targetStatus) {
+      formData.append("targetStatus", postData.targetStatus);
+    }
+    if (postData.auto !== undefined) {
+      formData.append("auto", String(postData.auto));
+    }
+    if (postData.silent !== undefined) {
+      formData.append("silent", String(postData.silent));
+    }
+    if (postData.keepPublished !== undefined) {
+      formData.append("keepPublished", String(postData.keepPublished));
+    }
+    if (postData.revisionId) {
+      formData.append("revisionId", postData.revisionId);
+    }
     formData.append("metaDescription", postData.metaDescription || "");
     formData.append("focusKeyword", postData.focusKeyword || "");
     
