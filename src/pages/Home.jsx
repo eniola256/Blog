@@ -38,31 +38,6 @@ useEffect(() => {
   };
   loadFeatured();
 }, []);
-
-// Only runs after featured is done
-useEffect(() => {
-  if (!featuredReady) return;
-
-  const loadLatest = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const exclude = featuredId ? `&exclude=${featuredId}` : "";
-      const data = await fetchPublicPosts(
-        `?page=${currentPage}&limit=${POSTS_PER_PAGE}${exclude}`
-      );
-      setLatestPosts(data.posts || []);
-      setTotalPages(data.totalPages || 1);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  loadLatest();
-}, [currentPage, featuredReady, featuredId]);
-
   // Load latest when page changes or featuredId is first set
   useEffect(() => {
     const loadLatest = async () => {
