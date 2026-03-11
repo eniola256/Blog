@@ -20,20 +20,48 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // Load featured ONCE on mount
-  useEffect(() => {
-    const loadFeatured = async () => {
-      try {
-        const featuredData = await fetchPublicPosts("?page=1&limit=1&sort=createdAt:asc");
-        const featured = (featuredData.posts || [])[0] || null;
-        setFeaturedPost(featured);
-        setFeaturedId(featured?._id || null);
-      } catch (err) {
-        setError(err.message);
-      }
-    };
-    loadFeatured();
-  }, []);
+ const [featuredReady, setFeaturedReady] = useState(false);
+
+// Load featured ONCE on mount
+useEffect(() => {
+  const loadFeatured = async () => {
+    try {
+      const featuredData = await fetchPublicPosts("?page=1&limit=1&sort=createdAt:asc");
+      const featured = (featuredData.posts || [])[0] || null;
+      setFeaturedPost(featured);
+      setFeaturedId(featured?._id || null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setFeaturedReady(true); // always mark ready, even if featured is null
+    }
+  };
+  loadFeatured();
+}, []);
+
+// Only runs after featured is done
+useEffect(() => {
+  if (!featuredReady) return;
+
+  const loadLatest = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const exclude = featuredId ? `&exclude=${featuredId}` : "";
+      const data = await fetchPublicPosts(
+        `?page=${currentPage}&limit=${POSTS_PER_PAGE}${exclude}`
+      );
+      setLatestPosts(data.posts || []);
+      setTotalPages(data.totalPages || 1);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadLatest();
+}, [currentPage, featuredReady, featuredId]);
 
   // Load latest when page changes or featuredId is first set
   useEffect(() => {
