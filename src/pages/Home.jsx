@@ -10,22 +10,24 @@ import "./Home.css";
 export default function Home() {
   const { user } = useAuth();
   const [featuredPost, setFeaturedPost] = useState(null);
+  const [featuredId, setFeaturedId] = useState(null);
   const [latestPosts, setLatestPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [animate, setAnimate] = useState(false);
 
-  // Pagination
   const POSTS_PER_PAGE = 6;
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  // Load featured ONCE on mount
   useEffect(() => {
     const loadFeatured = async () => {
       try {
         const featuredData = await fetchPublicPosts("?page=1&limit=1&sort=createdAt:asc");
         const featured = (featuredData.posts || [])[0] || null;
         setFeaturedPost(featured);
+        setFeaturedId(featured?._id || null);
       } catch (err) {
         setError(err.message);
       }
@@ -33,12 +35,13 @@ export default function Home() {
     loadFeatured();
   }, []);
 
+  // Load latest when page changes or featuredId is first set
   useEffect(() => {
     const loadLatest = async () => {
       try {
         setLoading(true);
         setError(null);
-        const exclude = featuredPost?._id ? `&exclude=${featuredPost._id}` : "";
+        const exclude = featuredId ? `&exclude=${featuredId}` : "";
         const data = await fetchPublicPosts(
           `?page=${currentPage}&limit=${POSTS_PER_PAGE}${exclude}`
         );
@@ -51,11 +54,9 @@ export default function Home() {
       }
     };
     loadLatest();
-  }, [currentPage, featuredPost?._id]);
+  }, [currentPage, featuredId]);
 
-  useEffect(() => {
-    setAnimate(true);
-  }, []);
+  useEffect(() => { setAnimate(true); }, []);
 
   useEffect(() => {
     trackAnalyticsEvent({
