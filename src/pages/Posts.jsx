@@ -189,7 +189,7 @@ export default function Posts() {
                         flex: 1,
                       }}
                     >
-                      {post.excerpt || ""}
+                      {post.metaDescription || post.excerpt || ""}
                     </p>
                     <div
                       style={{

@@ -212,7 +212,7 @@ export default function Home() {
                     <h3>{post.title}</h3>
                   </div>
                   <div className="ph-text">
-                    <p>{post.excerpt || ""}</p>
+                    <p>{post.metaDescription || post.excerpt || ""}</p>
                   </div>
                   <div className="wri-more">
                     <p className="writer">{post.author?.name || 'AE Hobs'}</p>

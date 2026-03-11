@@ -283,7 +283,7 @@ export default function Blog() {
                           </span>
                         </div>
                         <h3 className="blog-post-title">{post.title}</h3>
-                        <p className="blog-post-excerpt">{post.excerpt || ""}</p>
+                        <p className="blog-post-excerpt">{post.metaDescription || post.excerpt || ""}</p>
                         <div className="blog-post-footer">
                           <span className="blog-post-author">
                             {post.author?.name || "AE Hobs"}

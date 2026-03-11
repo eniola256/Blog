@@ -16,7 +16,8 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  align-items: start;
+  align-items: center;
+  text-align: center;
 }
 
 /* Category Badge */
@@ -49,7 +50,13 @@
 /* Post Meta in Header */
 .post-header .post-meta {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
   width: auto;
+  color: var(--foreground-secondary);
+  font-size: 0.95rem;
 }
 
 .post-author-info {
@@ -72,6 +79,7 @@
 
 .post-dot {
   opacity: 0.5;
+  line-height: 1;
 }
 
 /* Featured Image Container */
@@ -736,8 +744,7 @@
     font-size: 2rem;
   }
   
-  .post-meta {
-    flex-wrap: wrap;
+  .post-header .post-meta {
     font-size: 0.85rem;
   }
   
