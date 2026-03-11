@@ -39,25 +39,43 @@ useEffect(() => {
   loadFeatured();
 }, []);
   // Load latest when page changes or featuredId is first set
-  useEffect(() => {
-    const loadLatest = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const exclude = featuredId ? `&exclude=${featuredId}` : "";
-        const data = await fetchPublicPosts(
-          `?page=${currentPage}&limit=${POSTS_PER_PAGE}${exclude}`
+useEffect(() => {
+  if (!featuredReady) return;
+
+  const loadLatest = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const exclude = featuredId ? `&exclude=${featuredId}` : "";
+
+      const data = await fetchPublicPosts(
+        `?page=${currentPage}&limit=${POSTS_PER_PAGE}${exclude}`
+      );
+
+      // If excluding featured leaves no posts, fallback
+      if ((data.posts || []).length === 0) {
+        const fallback = await fetchPublicPosts(
+          `?page=${currentPage}&limit=${POSTS_PER_PAGE}`
         );
+
+        setLatestPosts(fallback.posts || []);
+        setTotalPages(fallback.totalPages || 1);
+      } else {
         setLatestPosts(data.posts || []);
         setTotalPages(data.totalPages || 1);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
       }
-    };
-    loadLatest();
-  }, [currentPage, featuredId]);
+
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadLatest();
+
+}, [currentPage, featuredId, featuredReady]);
 
   useEffect(() => { setAnimate(true); }, []);
 
