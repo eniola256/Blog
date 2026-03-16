@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { fetchPublicPosts } from "../api/post";
 import { trackAnalyticsEvent } from "../api/analytics";
 import { Link } from "react-router-dom";
+import { hydratePostWithFeaturedImage, hydratePostsWithFeaturedImages } from "../utils/featuredImage";
 import NewsletterPopup from "../components/NewsletterPopup";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import "./Home.css";
@@ -24,6 +25,7 @@ export default function Home() {
 
 // Load featured ONCE on mount
 useEffect(() => {
+  let cancelled = false;
   const loadFeatured = async () => {
     try {
       const featuredData = await fetchPublicPosts("?page=1&limit=1");
@@ -31,8 +33,17 @@ useEffect(() => {
       setFeaturedPost(featured);
       setFeaturedId(featured?._id || null);
 
-      console.log("Featured image URL:", featured?.featuredImage);
-      console.log("Full featured post object:", featured);
+      if (featured) {
+        hydratePostWithFeaturedImage(featured).then((hydrated) => {
+          if (cancelled) return;
+          if (!hydrated?.featuredImage) return;
+          setFeaturedPost((prev) => {
+            if (!prev || prev.slug !== hydrated.slug) return prev;
+            if (prev.featuredImage) return prev;
+            return hydrated;
+          });
+        });
+      }
 
     } catch (err) {
       setError(err.message);
@@ -41,11 +52,15 @@ useEffect(() => {
     }
   };
   loadFeatured();
+  return () => {
+    cancelled = true;
+  };
 }, []);
   // Load latest when page changes or featuredId is first set
 useEffect(() => {
   if (!featuredReady) return;
 
+  let cancelled = false;
   const loadLatest = async () => {
     try {
       setLoading(true);
@@ -60,27 +75,44 @@ useEffect(() => {
       console.log("Latest news posts:", data.posts);
 
       // If excluding featured leaves no posts, fallback
-      if ((data.posts || []).length === 0) {
+      let nextPosts = data.posts || [];
+      let nextTotalPages = data.totalPages || 1;
+      if (nextPosts.length === 0) {
         const fallback = await fetchPublicPosts(
           `?page=${currentPage}&limit=${POSTS_PER_PAGE}`
         );
-
-        setLatestPosts(fallback.posts || []);
-        setTotalPages(fallback.totalPages || 1);
-      } else {
-        setLatestPosts(data.posts || []);
-        setTotalPages(data.totalPages || 1);
+        nextPosts = fallback.posts || [];
+        nextTotalPages = fallback.totalPages || 1;
       }
 
+      if (!cancelled) {
+        setLatestPosts(nextPosts);
+        setTotalPages(nextTotalPages);
+      }
+
+      hydratePostsWithFeaturedImages(nextPosts).then((hydratedPosts) => {
+        if (cancelled) return;
+        setLatestPosts((prev) => {
+          if (!Array.isArray(prev) || prev.length !== hydratedPosts.length) return prev;
+          const sameOrder = prev.every((item, index) => item?.slug === hydratedPosts[index]?.slug);
+          if (!sameOrder) return prev;
+          const changed = prev.some((item, index) => item?.featuredImage !== hydratedPosts[index]?.featuredImage);
+          return changed ? hydratedPosts : prev;
+        });
+      });
+
     } catch (err) {
-      setError(err.message);
+      if (!cancelled) setError(err.message);
     } finally {
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     }
   };
 
   loadLatest();
 
+  return () => {
+    cancelled = true;
+  };
 }, [currentPage, featuredId, featuredReady]);
 
   useEffect(() => { setAnimate(true); }, []);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchPublicPosts } from "../api/post";
 import { Link } from "react-router-dom";
+import { hydratePostsWithFeaturedImages } from "../utils/featuredImage";
 import "./Home.css";
 
 export default function Posts() {
@@ -13,15 +14,40 @@ export default function Posts() {
   const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
+    let cancelled = false;
+
     setLoading(true);
     setError(null);
-    fetchPublicPosts(`?page=${currentPage}&limit=${POSTS_PER_PAGE}`)
-      .then((data) => {
-        setPosts(data.posts || []);
+
+    (async () => {
+      try {
+        const data = await fetchPublicPosts(`?page=${currentPage}&limit=${POSTS_PER_PAGE}`);
+        if (cancelled) return;
+
+        const nextPosts = data.posts || [];
+        setPosts(nextPosts);
         setTotalPages(data.totalPages || 1);
-      })
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+
+        hydratePostsWithFeaturedImages(nextPosts).then((hydratedPosts) => {
+          if (cancelled) return;
+          setPosts((prev) => {
+            if (!Array.isArray(prev) || prev.length !== hydratedPosts.length) return prev;
+            const sameOrder = prev.every((item, index) => item?.slug === hydratedPosts[index]?.slug);
+            if (!sameOrder) return prev;
+            const changed = prev.some((item, index) => item?.featuredImage !== hydratedPosts[index]?.featuredImage);
+            return changed ? hydratedPosts : prev;
+          });
+        });
+      } catch (err) {
+        if (!cancelled) setError(err.message);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [currentPage]);
 
   const SkeletonLoader = () => (
