@@ -26,10 +26,14 @@ export default function Home() {
 useEffect(() => {
   const loadFeatured = async () => {
     try {
-      const featuredData = await fetchPublicPosts("?page=1&limit=1&sort=createdAt:asc");
+      const featuredData = await fetchPublicPosts("?page=1&limit=1");
       const featured = (featuredData.posts || [])[0] || null;
       setFeaturedPost(featured);
       setFeaturedId(featured?._id || null);
+
+      console.log("Featured image URL:", featured?.featuredImage);
+      console.log("Full featured post object:", featured);
+
     } catch (err) {
       setError(err.message);
     } finally {
@@ -50,8 +54,10 @@ useEffect(() => {
       const exclude = featuredId ? `&exclude=${featuredId}` : "";
 
       const data = await fetchPublicPosts(
-        `?page=${currentPage}&limit=${POSTS_PER_PAGE}${exclude}`
+        `?page=${currentPage}&limit=${POSTS_PER_PAGE}`
       );
+
+      console.log("Latest news posts:", data.posts);
 
       // If excluding featured leaves no posts, fallback
       if ((data.posts || []).length === 0) {
@@ -85,9 +91,10 @@ useEffect(() => {
       userId: user?._id || user?.id || null,
     });
   }, [user?._id, user?.id]);
-
+ 
   // Skeleton component for initial load - shows content while fetching
   const SkeletonLoader = () => (
+    
     <>
       <div className="skeleton-header">
         <div className="skeleton skeleton-title"></div>
@@ -143,7 +150,6 @@ useEffect(() => {
           
           <h1>Welcome to <br />AE Tech/Gaming Blog</h1>
           <p>Thoughtful explorations on productivity, creativity, wellness, and living intentionally. Join our community of curious minds seeking meaningful insights</p>
-          
         </main>
 
         <section className="featured-story">

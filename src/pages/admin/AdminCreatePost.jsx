@@ -39,6 +39,7 @@ export default function AdminCreatePost() {
   const [isEditingPublished, setIsEditingPublished] = useState(false);
   const lastSavedFingerprintRef = useRef("");
   const pendingAutoSaveRef = useRef(false);
+  const featuredImageFileRef = useRef(null);
 
   // Load data on mount
   useEffect(() => {
@@ -111,10 +112,29 @@ export default function AdminCreatePost() {
   };
 
   const stripHtml = (html = "") => html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  const isUploadableFile = (value) => {
+    if (!value || typeof value !== "object") return false;
+    const hasType = typeof value.type === "string";
+    const hasSize = typeof value.size === "number";
+    const hasSlice = typeof value.slice === "function";
+    const hasArrayBuffer = typeof value.arrayBuffer === "function";
+    return hasType && hasSize && (hasSlice || hasArrayBuffer);
+  };
+
+  const normalizeFeaturedImageUrl = (value) => {
+    if (typeof value !== "string") return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    if (trimmed.startsWith("blob:") || trimmed.startsWith("data:")) return null;
+    return trimmed;
+  };
+
   const getFeaturedImageKey = (image) => {
     if (!image) return "";
-    if (image instanceof File) {
-      return `${image.name}:${image.size}:${image.lastModified}`;
+    if (isUploadableFile(image)) {
+      const name = typeof image.name === "string" ? image.name : "upload";
+      const lastModified = typeof image.lastModified === "number" ? image.lastModified : "";
+      return `${name}:${image.size}:${lastModified}`;
     }
     return String(image);
   };
@@ -173,6 +193,7 @@ export default function AdminCreatePost() {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      featuredImageFileRef.current = file;
       const imageUrl = URL.createObjectURL(file);
       setFeaturedImage(imageUrl);
       setFeaturedImageFile(file);
@@ -180,8 +201,16 @@ export default function AdminCreatePost() {
   };
 
   const handleRemoveImage = () => {
+    if (typeof featuredImage === "string" && featuredImage.startsWith("blob:")) {
+      try {
+        URL.revokeObjectURL(featuredImage);
+      } catch (_revokeError) {
+        // Ignore revoke errors.
+      }
+    }
     setFeaturedImage(null);
     setFeaturedImageFile(null);
+    featuredImageFileRef.current = null;
   };
 
   const savePost = async ({ targetStatus, redirect = false, silent = false, auto = false } = {}) => {
@@ -226,7 +255,9 @@ export default function AdminCreatePost() {
       const hasTitle = Boolean(title.trim());
       const safeTitle = hasTitle ? title.trim() : "Untitled Draft";
       const generatedSlug = hasTitle ? generateSlug(safeTitle) : `untitled-draft-${Date.now()}`;
-      const imageFile = featuredImageFile instanceof File ? featuredImageFile : null;
+      const imageFileCandidate = featuredImageFileRef.current || featuredImageFile;
+      const imageFile = isUploadableFile(imageFileCandidate) ? imageFileCandidate : null;
+      const safeFeaturedImageUrl = imageFile ? null : normalizeFeaturedImageUrl(featuredImage);
       const postData = {
         title: safeTitle,
         slug: generatedSlug,
@@ -237,7 +268,7 @@ export default function AdminCreatePost() {
         targetStatus: nextStatus,
         metaDescription: metaDescription.trim(),
         focusKeyword: focusKeyword.trim(),
-        featuredImage: imageFile ? undefined : (featuredImage ? featuredImage : null),
+        featuredImage: imageFile ? undefined : safeFeaturedImageUrl,
         auto,
         silent,
         keepPublished,
@@ -262,6 +293,15 @@ export default function AdminCreatePost() {
 
       if (!keepPublished) {
         setStatus(nextStatus);
+      }
+
+      const responseHasFeaturedImageField =
+        responsePost && Object.prototype.hasOwnProperty.call(responsePost, "featuredImage");
+      if (!silent && imageFile && responseHasFeaturedImageField && !responsePost.featuredImage) {
+        setError(
+          "Post saved, but the server returned no featured image URL. The image upload likely failed on the backend."
+        );
+        return;
       }
 
       if (nextStatus === "draft") {

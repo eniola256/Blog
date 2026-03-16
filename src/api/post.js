@@ -1,6 +1,15 @@
 // api/post.js
 const API = import.meta.env.VITE_API_URL;
 
+const isUploadableFile = (value) => {
+  if (!value || typeof value !== "object") return false;
+  const hasType = typeof value.type === "string";
+  const hasSize = typeof value.size === "number";
+  const hasSlice = typeof value.slice === "function";
+  const hasArrayBuffer = typeof value.arrayBuffer === "function";
+  return hasType && hasSize && (hasSlice || hasArrayBuffer);
+};
+
 // Get auth token
 const getToken = () => localStorage.getItem("token");
 
@@ -81,7 +90,7 @@ export async function fetchDraftRevisionForPost(postId) {
 
 export async function createPost(postData, featuredImage = null) {
   // If there's a featured image, use FormData
-  if (featuredImage instanceof File) {
+  if (isUploadableFile(featuredImage)) {
     const formData = new FormData();
     formData.append("title", postData.title);
     formData.append("slug", postData.slug);
@@ -115,7 +124,11 @@ export async function createPost(postData, featuredImage = null) {
       }
     }
     
-    formData.append("featuredImage", featuredImage);
+    if (typeof featuredImage?.name === "string") {
+      formData.append("featuredImage", featuredImage, featuredImage.name);
+    } else {
+      formData.append("featuredImage", featuredImage, "featured-image");
+    }
     
     const res = await fetch(`${API}/api/admin/posts`, {
       method: "POST",
@@ -144,7 +157,7 @@ export async function createPost(postData, featuredImage = null) {
 
 export async function updatePost(id, postData, featuredImage = null) {
   // If there's a featured image (new file), use FormData
-  if (featuredImage instanceof File) {
+  if (isUploadableFile(featuredImage)) {
     const formData = new FormData();
     formData.append("title", postData.title);
     formData.append("slug", postData.slug);
@@ -178,7 +191,11 @@ export async function updatePost(id, postData, featuredImage = null) {
       }
     }
     
-    formData.append("featuredImage", featuredImage);
+    if (typeof featuredImage?.name === "string") {
+      formData.append("featuredImage", featuredImage, featuredImage.name);
+    } else {
+      formData.append("featuredImage", featuredImage, "featured-image");
+    }
     
     const res = await fetch(`${API}/api/admin/posts/${id}`, {
       method: "PUT",
