@@ -5,6 +5,46 @@ import "./Login.css";
 
 const API = import.meta.env.VITE_API_URL;
 
+function PasswordField({
+  id,
+  label,
+  value,
+  onChange,
+  placeholder,
+  show,
+  onToggleVisibility,
+  toggleLabel = "password",
+  ...inputProps
+}) {
+  return (
+    <div className="form-group">
+      <label htmlFor={id}>{label}</label>
+      <div className="password-field">
+        <input
+          id={id}
+          type={show ? "text" : "password"}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          {...inputProps}
+        />
+        <button
+          type="button"
+          className="password-toggle"
+          onClick={onToggleVisibility}
+          aria-label={show ? `Hide ${toggleLabel}` : `Show ${toggleLabel}`}
+          aria-pressed={show}
+          title={show ? `Hide ${toggleLabel}` : `Show ${toggleLabel}`}
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            {show ? "visibility_off" : "visibility"}
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -17,6 +57,8 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -26,6 +68,8 @@ export default function Login() {
     setPassword("");
     setName("");
     setConfirmPassword("");
+    setShowPassword(false);
+    setShowConfirmPassword(false);
     setError(null);
     setSuccess(null);
   };
@@ -107,6 +151,8 @@ export default function Login() {
       setIsSignUp(false);
       setPassword("");
       setConfirmPassword("");
+      setShowPassword(false);
+      setShowConfirmPassword(false);
       setName("");
     } catch (err) {
       setError(err.message);
@@ -178,20 +224,21 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   required
+                  autoComplete="email"
                 />
               </div>
-              
-              <div className="form-group">
-                <label htmlFor="password">Password</label>
-                <input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                />
-              </div>
+               
+              <PasswordField
+                id="password"
+                label="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                show={showPassword}
+                onToggleVisibility={() => setShowPassword((prev) => !prev)}
+                required
+                autoComplete="current-password"
+              />
 
               <button type="submit" className="auth-submit" disabled={loading}>
                 {loading ? "Signing in..." : "Sign In"}
@@ -219,9 +266,10 @@ export default function Login() {
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter your full name"
                   required
+                  autoComplete="name"
                 />
               </div>
-              
+               
               <div className="form-group">
                 <label htmlFor="signup-email">Email</label>
                 <input
@@ -231,33 +279,35 @@ export default function Login() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                   required
+                  autoComplete="email"
                 />
               </div>
-              
-              <div className="form-group">
-                <label htmlFor="signup-password">Password</label>
-                <input
-                  id="signup-password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Create a password (min 6 characters)"
-                  required
-                  minLength={6}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="confirm-password">Confirm Password</label>
-                <input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm your password"
-                  required
-                />
-              </div>
+               
+              <PasswordField
+                id="signup-password"
+                label="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Create a password (min 6 characters)"
+                show={showPassword}
+                onToggleVisibility={() => setShowPassword((prev) => !prev)}
+                required
+                minLength={6}
+                autoComplete="new-password"
+              />
+               
+              <PasswordField
+                id="confirm-password"
+                label="Confirm Password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm your password"
+                show={showConfirmPassword}
+                onToggleVisibility={() => setShowConfirmPassword((prev) => !prev)}
+                toggleLabel="confirm password"
+                required
+                autoComplete="new-password"
+              />
 
               <button type="submit" className="auth-submit" disabled={loading}>
                 {loading ? "Creating account..." : "Sign Up"}

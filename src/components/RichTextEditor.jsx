@@ -30,8 +30,7 @@ export default function RichTextEditor({ value, onChange, placeholder }) {
 
   // Insert heading
   const insertHeading = (level) => {
-    const heading = `<h${level}>Heading ${level}</h${level}><p></p>`;
-    format("insertHTML", heading);
+    format("formatBlock", `<h${level}>`);
   };
 
   // Insert image
